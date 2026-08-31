@@ -10,7 +10,7 @@ describe('tvmaze mock handler', () => {
 
     expect(page0?.body).toEqual(tvmazeMockData.browsePages[0])
     expect(page1?.body).toEqual(tvmazeMockData.browsePages[1])
-    expect(page99?.body).toEqual([])
+    expect(page99).toEqual({ status: 404, body: { message: 'Not Found' } })
     expect(tvmazeMockData.browsePages[0]).toHaveLength(tvmazeTestLabels.browsePageSize)
   })
 

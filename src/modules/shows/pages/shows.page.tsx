@@ -1,5 +1,4 @@
-import { useMemo } from 'react'
-import { useFavoritesStore } from '@/modules/favorites'
+import { useEffect, useMemo, useRef } from 'react'
 import { useShowsList } from '../hooks/use-shows-list'
 import { useInfiniteScroll } from '../hooks/use-infinite-scroll'
 import { buildShowRows } from '../services/build-show-rows.service'
@@ -8,7 +7,6 @@ import { ShowsGrid } from '../components/shows-grid'
 import { ShowsHero } from '../components/shows-hero'
 import { ShowsListStates } from '../components/shows-list-states'
 import { ShowsToolbar } from '../components/shows-toolbar'
-import type { Show } from '../schemas/tvmaze.schema'
 
 export function ShowsPage() {
   const {
@@ -26,46 +24,42 @@ export function ShowsPage() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-    isFetchNextPageError,
   } = useShowsList()
 
   const sentinelRef = useInfiniteScroll(
     () => {
       void fetchNextPage()
     },
-    !isSearchActive && !isFetchNextPageError,
+    !isSearchActive,
     hasNextPage,
     isFetchingNextPage,
   )
 
-  const favorites = useFavoritesStore((state) => state.favorites)
-  const favoriteShows = useMemo<Show[]>(
-    () =>
-      favorites.map((favorite) => ({
-        id: favorite.id,
-        name: favorite.name,
-        status: favorite.status,
-        image: favorite.imageMedium
-          ? { medium: favorite.imageMedium, original: favorite.imageMedium }
-          : null,
-      })),
-    [favorites],
-  )
-
   const statusFilterLabel = statusFilter === 'all' ? 'All' : statusFilter
   const showCatalog = !isInitialLoading && !isError && !isEmpty
-  const featuredShow = !isSearchActive ? shows[0] : undefined
+  const lockedFeaturedIdRef = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    lockedFeaturedIdRef.current = undefined
+  }, [isSearchActive, statusFilter])
+
+  if (!isSearchActive && shows[0] && lockedFeaturedIdRef.current === undefined) {
+    lockedFeaturedIdRef.current = shows[0].id
+  }
+
+  const featuredShow = !isSearchActive
+    ? (shows.find((show) => show.id === lockedFeaturedIdRef.current) ?? shows[0])
+    : undefined
   const rows = useMemo(
     () =>
       buildShowRows(shows, {
         featuredShowId: featuredShow?.id,
-        favoriteShows: isSearchActive ? undefined : favoriteShows,
       }),
-    [favoriteShows, featuredShow?.id, isSearchActive, shows],
+    [featuredShow?.id, shows],
   )
 
   return (
-    <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 md:pb-8">
+    <div className="flex min-w-0 flex-col overflow-x-hidden [overflow-anchor:none] pb-24 md:pb-8">
       {featuredShow ? <ShowsHero show={featuredShow} /> : null}
 
       <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 py-6 sm:px-8 lg:px-12">
@@ -101,16 +95,7 @@ export function ShowsPage() {
         ) : null}
 
         {showCatalog && !isSearchActive && rows.length > 0 ? (
-          <ShowsBrowseRows
-            rows={rows}
-            sentinelRef={sentinelRef}
-            isFetchingNextPage={isFetchingNextPage}
-            isFetchNextPageError={isFetchNextPageError}
-            hasNextPage={hasNextPage}
-            onRetryNextPage={() => {
-              void fetchNextPage()
-            }}
-          />
+          <ShowsBrowseRows rows={rows} sentinelRef={sentinelRef} />
         ) : null}
 
         {showCatalog && !isSearchActive && rows.length === 0 && featuredShow ? (

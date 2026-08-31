@@ -7,7 +7,9 @@ type MockResponse = {
 
 function getBrowsePage(page: number) {
   const key = String(page) as keyof typeof tvmazeMockData.browsePages
-  return tvmazeMockData.browsePages[key] ?? []
+  return Object.hasOwn(tvmazeMockData.browsePages, key)
+    ? tvmazeMockData.browsePages[key]
+    : undefined
 }
 
 function getSearchResults(query: string) {
@@ -58,7 +60,13 @@ export function resolveTvmazeMockResponse(url: string): MockResponse | null {
   const browseMatch = url.match(/\/shows\?page=(\d+)/)
   if (browseMatch) {
     const page = Number.parseInt(browseMatch[1] ?? '0', 10)
-    return { status: 200, body: getBrowsePage(page) }
+    const shows = getBrowsePage(page)
+
+    if (!shows) {
+      return { status: 404, body: { message: 'Not Found' } }
+    }
+
+    return { status: 200, body: shows }
   }
 
   const episodesMatch = url.match(/\/shows\/(\d+)\/episodes$/)

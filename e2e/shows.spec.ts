@@ -77,16 +77,68 @@ test.describe('Shows browse', () => {
       }),
     ).toBeVisible()
 
+    const page1Response = page.waitForResponse((response) =>
+      response.url().includes('/shows?page=1'),
+    )
     await page.evaluate(() => {
       window.scrollTo(0, document.documentElement.scrollHeight)
     })
-    const scrollBeforeError = await page.evaluate(() => window.scrollY)
+    const scrollBeforeRetry = await page.evaluate(() => window.scrollY)
+    await page1Response
 
-    await expect(page.getByText(/Could not load more shows/)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Your Next Watch' })).toBeVisible()
+    await expect(page.getByText(/Could not load more shows/)).toHaveCount(0)
+    await expect(page.getByText('Loading more shows')).toHaveCount(0)
+    await expect(page.getByLabel('Loading shows')).toHaveCount(0)
 
-    const scrollAfterError = await page.evaluate(() => window.scrollY)
-    expect(scrollAfterError).toBeGreaterThan(0)
-    expect(Math.abs(scrollAfterError - scrollBeforeError)).toBeLessThan(100)
+    const scrollAfterRetry = await page.evaluate(() => window.scrollY)
+    expect(scrollAfterRetry).toBeGreaterThan(0)
+    expect(Math.abs(scrollAfterRetry - scrollBeforeRetry)).toBeLessThan(100)
+  })
+
+  test('does not fetch again after the catalog ends with a 404', async ({ page }) => {
+    let page2Hits = 0
+
+    await page.route('**/api.tvmaze.com/shows?page=1', async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Not Found' }),
+      })
+    })
+    await page.route('**/api.tvmaze.com/shows?page=2', async (route) => {
+      page2Hits += 1
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Not Found' }),
+      })
+    })
+
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', {
+        name: tvmazeTestLabels.featuredShowName,
+        level: 1,
+      }),
+    ).toBeVisible()
+
+    const page1Response = page.waitForResponse((response) =>
+      response.url().includes('/shows?page=1'),
+    )
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight)
+    })
+    await page1Response
+
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight)
+    })
+
+    await expect(page.getByRole('heading', { name: 'Your Next Watch' })).toBeVisible()
+    await expect(page.getByText('Loading more shows')).toHaveCount(0)
+    await expect(page.getByLabel('Loading shows')).toHaveCount(0)
+    expect(page2Hits).toBe(0)
   })
 })
 

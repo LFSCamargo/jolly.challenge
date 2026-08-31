@@ -14,6 +14,10 @@ import {
 import type { StatusFilter } from '../types/show-status.type'
 import { useDebouncedValue } from './use-debounced-value'
 
+const isTestEnv = import.meta.env.MODE === 'test'
+const RATE_LIMIT_RETRY_DELAY_MS = isTestEnv ? 1 : 2_500
+const RATE_LIMIT_MAX_RETRIES = isTestEnv ? 3 : 20
+
 export function useShowsList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialParams = parseShowsSearchParams(searchParams)
@@ -54,17 +58,40 @@ export function useShowsList() {
     queryKey: ['shows', 'list'],
     queryFn: ({ pageParam, signal }) => fetchShowsPage(pageParam, signal),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, _pages, lastPageParam) =>
-      lastPage.length === 0 ? undefined : lastPageParam + 1,
+    getNextPageParam: (lastPage, pages, lastPageParam) => {
+      if (pages.some((page) => page.length === 0) || lastPage.length === 0) {
+        return undefined
+      }
+
+      return lastPageParam + 1
+    },
     enabled: !isSearchActive,
-    retry: (failureCount, error) => !isTvmazeRateLimitError(error) && failureCount < 1,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: (failureCount, error) =>
+      isTvmazeRateLimitError(error)
+        ? failureCount < RATE_LIMIT_MAX_RETRIES
+        : failureCount < 1,
+    retryDelay: (attemptIndex, error) =>
+      isTvmazeRateLimitError(error)
+        ? RATE_LIMIT_RETRY_DELAY_MS * (attemptIndex + 1)
+        : 500,
   })
 
   const searchQueryResult = useQuery({
     queryKey: ['shows', 'search', debouncedQuery],
     queryFn: ({ signal }) => searchShows(debouncedQuery, signal),
     enabled: isSearchActive,
-    retry: (failureCount, error) => !isTvmazeRateLimitError(error) && failureCount < 1,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: (failureCount, error) =>
+      isTvmazeRateLimitError(error)
+        ? failureCount < RATE_LIMIT_MAX_RETRIES
+        : failureCount < 1,
+    retryDelay: (attemptIndex, error) =>
+      isTvmazeRateLimitError(error)
+        ? RATE_LIMIT_RETRY_DELAY_MS * (attemptIndex + 1)
+        : 500,
   })
 
   const sourceShows = useMemo(() => {
@@ -80,6 +107,9 @@ export function useShowsList() {
     [sourceShows, statusFilter],
   )
 
+  const reachedEnd =
+    !isSearchActive && Boolean(browseQuery.data?.pages.some((page) => page.length === 0))
+
   const isInitialLoading = isSearchActive
     ? searchQueryResult.isPending && !searchQueryResult.data
     : browseQuery.isPending && !browseQuery.data
@@ -88,7 +118,7 @@ export function useShowsList() {
     ? searchQueryResult.isFetching && Boolean(searchQueryResult.data)
     : false
 
-  const hasBrowseData = Boolean(browseQuery.data?.pages.length)
+  const hasBrowseData = Boolean(browseQuery.data?.pages.some((page) => page.length > 0))
   const isError = isSearchActive
     ? searchQueryResult.isError
     : browseQuery.isError && !hasBrowseData
@@ -97,9 +127,16 @@ export function useShowsList() {
 
   const refetch = isSearchActive ? searchQueryResult.refetch : browseQuery.refetch
 
-  const hasNextPage = !isSearchActive && Boolean(browseQuery.hasNextPage)
+  const hasNextPage = !isSearchActive && !reachedEnd && Boolean(browseQuery.hasNextPage)
   const isFetchingNextPage = browseQuery.isFetchingNextPage
-  const isFetchNextPageError = !isSearchActive && browseQuery.isFetchNextPageError
+
+  const fetchNextPage = () => {
+    if (reachedEnd || isFetchingNextPage || !hasNextPage) {
+      return Promise.resolve()
+    }
+
+    return browseQuery.fetchNextPage()
+  }
 
   return {
     shows,
@@ -114,9 +151,8 @@ export function useShowsList() {
     error,
     refetch,
     hasNextPage,
-    fetchNextPage: browseQuery.fetchNextPage,
+    fetchNextPage,
     isFetchingNextPage,
-    isFetchNextPageError,
     isEmpty: !isInitialLoading && !isError && shows.length === 0,
   }
 }

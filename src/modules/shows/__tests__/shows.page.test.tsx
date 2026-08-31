@@ -130,9 +130,86 @@ describe('ShowsPage', () => {
       )
     })
 
-    expect(await screen.findByText(/Could not load more shows/)).toBeInTheDocument()
     expect(featuredHeading).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Your Next Watch' })).toBeInTheDocument()
+    expect(screen.queryByText(/Could not load more shows/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Loading more shows')).not.toBeInTheDocument()
+  })
+
+  it('does not request another page after the catalog ends with an empty page', async () => {
+    let intersect: (() => void) | undefined
+
+    class ControlledIntersectionObserver {
+      observe = vi.fn((target: Element) => {
+        intersect = () => {
+          this.callback(
+            [{ isIntersecting: true, target } as IntersectionObserverEntry],
+            this as unknown as IntersectionObserver,
+          )
+        }
+      })
+      unobserve = vi.fn()
+      disconnect = vi.fn()
+
+      constructor(private readonly callback: IntersectionObserverCallback) {}
+    }
+
+    vi.stubGlobal('IntersectionObserver', ControlledIntersectionObserver)
+
+    const fixtureFetch = vi.mocked(globalThis.fetch).getMockImplementation()
+    vi.mocked(globalThis.fetch).mockImplementation((input, init) => {
+      if (String(input).includes('/shows?page=1')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 }),
+        )
+      }
+
+      return fixtureFetch?.(input, init) ?? Promise.reject(new Error('Missing fixture'))
+    })
+
+    renderApp({ path: '/' })
+
+    expect(
+      await screen.findByRole('heading', {
+        name: tvmazeTestLabels.featuredShowName,
+      }),
+    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(intersect).toBeDefined()
+    })
+
+    act(() => {
+      intersect?.()
+    })
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/shows?page=1'),
+        expect.any(Object),
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Your Next Watch' })).toBeInTheDocument()
+    })
+
+    const callsAfterEnd = vi.mocked(globalThis.fetch).mock.calls.length
+
+    act(() => {
+      intersect?.()
+    })
+
+    await waitFor(() => {
+      expect(vi.mocked(globalThis.fetch).mock.calls.length).toBe(callsAfterEnd)
+    })
+    expect(
+      vi.mocked(globalThis.fetch).mock.calls.some(([input]) =>
+        String(input).includes('/shows?page=2'),
+      ),
+    ).toBe(false)
+    expect(screen.queryByText('Loading more shows')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Loading shows')).not.toBeInTheDocument()
   })
 
   it('initializes search and filter from query string params', async () => {

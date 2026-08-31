@@ -120,4 +120,8 @@ mobile per `.cursor/rules/design-ux.mdc` before implementing.
 | `/favorites` | My List | `favorites` | — |
 | `*` | Not found | `common` | — |
 
+Browse pagination: TVMaze `404` marks the catalog complete (no further fetches, no
+end-of-list loader). `429` retries silently in the background without moving
+already-rendered rows. Browse rows are append-only chunks.
+
 Add new routes in `src/routes/index.tsx` and create matching modules under `src/modules/`.
