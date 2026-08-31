@@ -1,0 +1,38 @@
+---
+description: Production performance and complexity guardrails for generated code
+alwaysApply: true
+---
+
+# O1 Check Performance & Complexity Rule
+
+Before returning non-trivial TypeScript/JavaScript code, evaluate **production performance risk**
+as if running an O(n) complexity review against the change.
+
+## Evaluate before returning code
+
+- Cyclomatic complexity, nesting depth, and function length
+- Nested loops over large lists or DOM trees
+- Unbounded re-renders from unstable object/array references in React
+- Sequential awaits that could be batched with `Promise.all`
+- O(n²) lookups where a `Map` / `Set` would be O(n)
+
+## Avoid in production paths
+
+- Filtering or sorting large arrays on every render without memoization
+- Deeply nested loops with `.includes()` / `.find()` on arrays
+- Fetching the same data repeatedly without caching or deduplication
+- Inline anonymous functions/objects passed to memoized child components
+
+## Prefer
+
+- `useMemo` / `useCallback` for expensive derived state (only when profiling shows need)
+- `Map` / `Set` pre-indexing before iteration
+- `Promise.all` for independent async work
+- Early returns to flatten nesting
+- Pagination or virtualization for long lists
+
+## When returning non-trivial code
+
+Include a **short complexity note** (e.g. "O(n) single pass over items with Map lookup").
+
+If estimated risk is **high** or **critical**, refactor before returning the code.

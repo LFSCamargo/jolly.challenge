@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --jc-canvas: 245 245 245;
+  --jc-surface: 255 255 255;
+  --jc-foreground: 0 0 0;
+  --jc-primary: 255 77 15;
+  --jc-primary-foreground: 255 255 255;
+  --jc-muted: 107 114 128;
+  --jc-muted-background: 245 245 245;
+  --jc-border: 229 229 229;
+}
+
+.dark {
+  color-scheme: dark;
+  --jc-canvas: 0 0 0;
+  --jc-surface: 10 10 10;
+  --jc-foreground: 255 255 255;
+  --jc-primary: 255 77 15;
+  --jc-primary-foreground: 255 255 255;
+  --jc-muted: 163 163 163;
+  --jc-muted-background: 23 23 23;
+  --jc-border: 38 38 38;
+}
+
+@layer base {
+  body {
+    @apply bg-canvas font-sans text-foreground antialiased;
+  }
+}

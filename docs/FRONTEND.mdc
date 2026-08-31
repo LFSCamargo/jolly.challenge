@@ -1,0 +1,76 @@
+# Jolly Challenge — Frontend
+
+Frontend-only React application for the Jolly coding challenge. No backend — all logic
+and state run in the browser.
+
+## Stack
+
+| Layer | Choice |
+| ----- | ------ |
+| Framework | React 19 + TypeScript |
+| Build | Vite |
+| Routing | React Router |
+| Styling | Tailwind CSS |
+| Validation | Zod |
+| Tests | Vitest + Testing Library |
+
+## Folder structure
+
+```
+src/
+  app/                   # App shell (providers)
+  common/
+    components/          # Shared UI components
+    layouts/             # Root and app layouts
+  modules/
+    home/                # Starter module — replace/extend for the challenge
+      pages/
+      routes.ts
+      __tests__/
+  routes/
+    index.tsx            # Central route wiring
+  styles/
+    index.css            # Tailwind + CSS variables
+  __tests__/
+    setup.ts             # Vitest setup
+  main.tsx
+```
+
+## Module conventions
+
+Each feature module under `src/modules/<name>/` follows the layout in
+`.cursor/rules/spaghetti-checker.mdc`:
+
+- `pages/` — one page component per file
+- `components/` — one component per file
+- `hooks/` — one hook per file
+- `schemas/` — Zod schemas (one per file)
+- `routes.ts` — re-exports pages only (no component bodies)
+- `__tests__/` — all tests (never beside source)
+
+## Scripts
+
+| Command | Purpose |
+| ------- | ------- |
+| `npm run dev` | Start Vite dev server (port 5173) |
+| `npm run build` | Typecheck + production build |
+| `npm run test` | Run Vitest unit tests |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript |
+| `npm run check:spaghetti` | Module layout checker |
+| `npm run check:security` | Frontend security checker |
+| `npm run knip` | Dead code / unused dependency scan |
+
+## AI tooling
+
+Cursor rules in `.cursor/rules/` and hooks in `.cursor/hooks/` mirror the setup from
+`password.manager`, adapted for this single-app frontend repo. Quality gates are
+defined in `.cursor/rules/quality-gating.mdc`.
+
+## Routes (current)
+
+| Path | Page | Module |
+| ---- | ---- | ------ |
+| `/` | Home | `home` |
+
+Add new routes in `src/routes/index.tsx` and create matching modules under `src/modules/`.

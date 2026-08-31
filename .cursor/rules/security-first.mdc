@@ -1,0 +1,49 @@
+---
+description: Frontend security and secret-handling rules; run check:security before finishing
+alwaysApply: true
+---
+
+# Security First Rule
+
+Security is enforced by **automated checkers**, not prose. Fix all violations before declaring work done.
+
+**Enforcement:**
+
+| Command | When | What it checks |
+| ------- | ---- | -------------- |
+| `npm run check:security` | Husky pre-commit, Cursor `afterFileEdit` / `stop` hooks | Static frontend rules (`scripts/check-security.mjs`) |
+| `npm run audit` | Quality gate | Dependency vulnerabilities |
+
+---
+
+## Static checker rules (`scripts/check-security.mjs`)
+
+Each violation prints a rule ID. Do not disable rules — fix the code.
+
+| Rule ID | Scope | Violation | Fix |
+| ------- | ----- | --------- | --- |
+| `CRYPTO-NO-MATH-RANDOM` | `services/`, `*-crypto.service.ts` | `Math.random()` | Use `crypto.getRandomValues` / CSPRNG |
+| `PERSIST-NO-SECRETS` | `*/stores/` | `partialize` includes secrets | Keep secrets in memory only |
+| `HTML-NO-DANGEROUS` | `src/modules/` | `dangerouslySetInnerHTML` | Escape or sanitize HTML |
+| `LOG-NO-SECRETS` | `src/modules/`, `src/common/` | `console.*` logs secrets | Remove or redact logs |
+
+---
+
+## Secrets & logging
+
+Never hardcode API keys, tokens, or passwords in source. Use environment variables
+(`import.meta.env.VITE_*`) loaded from `.env` (gitignored).
+
+Logs must never contain: passwords, tokens, API keys, or other secrets.
+
+---
+
+## Agent checklist (run on every security-sensitive change)
+
+When editing `src/modules/` or `src/common/`:
+
+1. **Run static checker** — `npm run check:security` must pass.
+2. **Run gates** — `npm run typecheck` and `npm run test` for touched modules.
+3. **Update docs** — `docs/FRONTEND.mdc` if security-related behavior changes.
+
+If the checker fails, fix the violation — do not bypass or suppress rules.

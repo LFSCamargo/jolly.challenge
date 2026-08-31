@@ -1,0 +1,35 @@
+---
+description: Jolly challenge frontend overview, purpose, and architecture
+alwaysApply: true
+---
+
+# Jolly Challenge — Frontend Overview
+
+A frontend-only React challenge app. No backend — all state and logic run in the browser.
+Source of truth: [docs/FRONTEND.mdc](../../docs/FRONTEND.mdc).
+
+## Purpose
+
+- Deliver the Jolly frontend challenge in a clean, testable React codebase.
+- Keep modules small and predictable so AI-assisted changes stay reviewable.
+- Enforce quality gates (lint, typecheck, tests, spaghetti/security checkers) before merge.
+
+## Stack
+
+- **Runtime:** React 19 + TypeScript + Vite
+- **Routing:** React Router
+- **Styling:** Tailwind CSS
+- **Validation:** Zod
+- **Tests:** Vitest + Testing Library
+
+## Module layout
+
+Feature code lives under `src/modules/<name>/` with `pages/`, `components/`, `hooks/`,
+`schemas/`, `stores/`, `types/`, `routes.ts`, and `__tests__/`. Shared UI goes in
+`src/common/`. Route wiring is centralized in `src/routes/index.tsx`.
+
+## Where to look next
+
+- Frontend architecture: [docs/FRONTEND.mdc](../../docs/FRONTEND.mdc)
+- Module layout: `.cursor/rules/spaghetti-checker.mdc`
+- Quality gates: `.cursor/rules/quality-gating.mdc`

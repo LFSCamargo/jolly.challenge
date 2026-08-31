@@ -1,0 +1,29 @@
+---
+description: Keep docs/ in sync whenever implementation changes are not already described in the documentation
+alwaysApply: true
+---
+
+# Documentation Sync Rule
+
+The `docs/` folder is the source of truth for the Jolly challenge frontend:
+
+- [docs/FRONTEND.mdc](mdc:docs/FRONTEND.mdc) — product scope, routes, module layout, and conventions.
+
+## When to apply
+
+Whenever you make an implementation change (add/remove/rename a feature, module,
+route, folder, or behavior) that is **not already described** in `docs/`,
+you MUST update the relevant doc(s) in the same change.
+
+## Rules
+
+1. **Keep folder structures accurate.** When you add/rename/remove a module or folder,
+   update the modular folder-structure tree in `docs/FRONTEND.mdc`.
+2. **Keep cross-references valid.** Route paths in docs must match `src/routes/index.tsx`.
+3. **No silent drift.** If you cannot fully document a change, leave a clearly marked
+   `TODO(docs):` note in the relevant doc rather than skipping it.
+
+## Definition of done
+
+A change is not complete until: the code change and the matching `docs/` update are
+both made, and the folder-structure trees match the actual implementation.

@@ -1,0 +1,37 @@
+---
+description: Test-driven development workflow and coverage expectations
+alwaysApply: true
+---
+
+# Test-Driven Development Rule
+
+Every feature and bug fix is developed test-first. Tests are not optional and are
+part of the definition of done (see `.cursor/rules/quality-gating.mdc`).
+
+## Workflow (red → green → refactor)
+
+1. **Red** write a failing test that describes the desired behavior (or
+   reproduces the bug) before writing implementation code.
+2. **Green** write the minimum code to make the test pass.
+3. **Refactor** clean up while keeping tests green.
+
+## What to test
+
+- **Components & pages** Vitest + Testing Library in `__tests__/*.test.tsx` that render
+  components/hooks and assert user-visible behavior.
+- **Pure logic** Vitest in `__tests__/*.test.ts` for schemas, utilities, and services.
+
+## Coverage expectations
+
+- New/changed business logic must be covered by tests.
+- Bug fixes must include a regression test.
+- Tests live in `__tests__/` folders (never co-located beside source) and mirror
+  the modular folder structure.
+- Target ≥ 80% statement coverage on `src/` (enforced in `vitest.config.ts` when
+  coverage is run with `--coverage`).
+
+## Rules
+
+- A feature without tests is incomplete.
+- Do not weaken assertions or mock away the behavior under test just to pass.
+- Prefer deterministic tests; avoid real network — use fixtures and mocked responses.

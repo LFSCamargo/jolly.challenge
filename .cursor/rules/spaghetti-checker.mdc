@@ -1,0 +1,76 @@
+---
+description: Enforce one context per file module layout; run check:spaghetti before finishing
+alwaysApply: true
+---
+
+# Spaghetti Checker — One Context Per File
+
+Keep each file focused on a single responsibility. Too much in one file hurts
+readability, reviewability, and testability.
+
+**Enforcement:** `npm run check:spaghetti` (also in Husky pre-commit and Cursor
+`afterFileEdit` / `stop` hooks). Fix all violations before declaring work done.
+
+---
+
+## Canonical module layout `src/modules/<name>/`
+
+```
+<name>/
+  pages/                 # route-level page components
+  components/            # one React component per .tsx
+  hooks/                 # one hook per file
+  schemas/               # Zod form validation
+  services/              # business logic
+  stores/                # Zustand slice (if needed)
+  types/
+  routes.ts              # re-exports pages only — no component bodies
+  __tests__/             # Vitest + Testing Library tests
+```
+
+| File               | Allowed contents                              |
+| ------------------ | --------------------------------------------- |
+| `routes.ts`        | `export { XPage } from './pages/x-page'` only |
+| `pages/*.tsx`      | Single page component                         |
+| `components/*.tsx` | Single component                              |
+| `hooks/*.ts`       | Single custom hook                            |
+| `__tests__/`       | Vitest + Testing Library tests                |
+
+Shared UI → `src/common/components/`. Cross-module imports go through public
+module surfaces (`routes.ts`, barrel `index.ts`) — never another module's internals.
+
+---
+
+## When to split
+
+Split when a file has **more than one** of: React component, page, hook, schema,
+service concern, or adapter.
+
+---
+
+## Tests
+
+All tests live in `__tests__/` — never co-located beside source.
+
+```
+modules/home/
+  __tests__/
+    home.page.test.tsx
+```
+
+Target: ≥ 80% statement coverage on tested UI components. Tests use Testing Library
+only in `__tests__/*.test.tsx`.
+
+---
+
+## Agent checklist (run on every module create/modify)
+
+When creating or editing anything under `src/modules/` or `src/common/components/`:
+
+1. **Match layout** use the canonical folder tree above.
+2. **Split before merge** new page → `pages/`; new component → `components/`.
+3. **Run checker** `npm run check:spaghetti` must pass.
+4. **Run gates** `npm run typecheck` and `npm run test` for touched modules.
+5. **Update docs** `docs/FRONTEND.mdc` if module structure changed.
+
+If the checker fails, fix structure — do not disable or bypass the rule.
