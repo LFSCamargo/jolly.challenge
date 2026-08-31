@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { cn } from '@/lib/utils'
 import { useShowsList } from '../hooks/use-shows-list'
+import { useHomeEnterTransition } from '../hooks/use-home-enter-transition'
 import { useInfiniteScroll } from '../hooks/use-infinite-scroll'
 import { buildBrowseSections } from '../services/build-browse-sections.service'
 import { ShowsBrowseRows } from '../components/shows-browse-rows'
@@ -25,6 +27,25 @@ export function ShowsPage() {
     fetchNextPage,
     isFetchingNextPage,
   } = useShowsList()
+  const isEnteringFromSearch = useHomeEnterTransition()
+  const homeEnterClass = useMemo(
+    () =>
+      cn(
+        'motion-reduce:animate-none',
+        isEnteringFromSearch &&
+          'animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out',
+      ),
+    [isEnteringFromSearch],
+  )
+  const homeHeroEnterClass = useMemo(
+    () =>
+      cn(
+        'motion-reduce:animate-none',
+        isEnteringFromSearch &&
+          'animate-in fade-in slide-in-from-bottom-8 zoom-in-95 duration-700 ease-out',
+      ),
+    [isEnteringFromSearch],
+  )
 
   const sentinelRef = useInfiniteScroll(
     () => {
@@ -61,7 +82,11 @@ export function ShowsPage() {
   return (
     <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 [overflow-anchor:none] md:pb-8">
       <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 pt-20 pb-6 sm:px-8 lg:px-12">
-        {featuredShow ? <ShowsHero show={featuredShow} /> : null}
+        {featuredShow ? (
+          <div className={homeHeroEnterClass}>
+            <ShowsHero show={featuredShow} />
+          </div>
+        ) : null}
 
         {!featuredShow ? (
           <div className="flex flex-col gap-2">
@@ -71,14 +96,21 @@ export function ShowsPage() {
           </div>
         ) : null}
 
-        <ShowsToolbar
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          isUpdating={isUpdating}
-          showSearch={false}
-        />
+        <div
+          className={cn(
+            homeEnterClass,
+            isEnteringFromSearch && 'delay-150',
+          )}
+        >
+          <ShowsToolbar
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            isUpdating={isUpdating}
+            showSearch={false}
+          />
+        </div>
 
         <ShowsListStates
           isInitialLoading={isInitialLoading}
@@ -98,11 +130,18 @@ export function ShowsPage() {
         {showCatalog &&
         !isSearchActive &&
         (nextWatch.length > 0 || remaining.length > 0) ? (
-          <ShowsBrowseRows
-            nextWatch={nextWatch}
-            remaining={remaining}
-            sentinelRef={sentinelRef}
-          />
+          <div
+            className={cn(
+              homeEnterClass,
+              isEnteringFromSearch && 'delay-300',
+            )}
+          >
+            <ShowsBrowseRows
+              nextWatch={nextWatch}
+              remaining={remaining}
+              sentinelRef={sentinelRef}
+            />
+          </div>
         ) : null}
 
         {showCatalog &&
