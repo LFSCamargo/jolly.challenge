@@ -78,11 +78,10 @@ export function ShowDetailPage() {
 
   if (showQuery.isPending) {
     return (
-      <main className="mx-auto max-w-3xl px-4 pt-20 pb-24 sm:px-6 md:pb-8">
-        <Skeleton className="mb-6 h-8 w-48" />
-        <Skeleton className="mb-6 aspect-video w-full max-w-md rounded-xl" />
-        <Skeleton className="mb-3 h-6 w-full" />
-        <Skeleton className="h-6 w-5/6" />
+      <main className="mx-auto w-full max-w-[1920px] px-4 pt-20 pb-24 sm:px-8 lg:px-12 md:pb-8">
+        <Skeleton className="min-h-104 rounded-2xl sm:min-h-112 lg:min-h-128" />
+        <Skeleton className="mt-8 h-8 w-40" />
+        <Skeleton className="mt-4 h-24 w-full rounded-xl" />
       </main>
     )
   }
@@ -118,7 +117,7 @@ export function ShowDetailPage() {
   return (
     <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 md:pb-8">
       <ShowDetailHero show={show} />
-      <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 py-8 sm:px-8 lg:max-w-4xl lg:px-12">
+      <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 pb-24 sm:px-8 lg:max-w-4xl lg:px-12 md:pb-8">
         <ShowEpisodes
           episodes={episodesQuery.data}
           isPending={episodesQuery.isPending}
