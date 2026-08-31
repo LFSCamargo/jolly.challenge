@@ -94,6 +94,33 @@ describe('app router', () => {
     expect(
       await screen.findByRole('heading', { name: 'Your Next Watch' }),
     ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Search titles, genres, and keywords')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open search' }))
+
+    expect(screen.getByLabelText('Search titles, genres, and keywords')).toHaveValue(
+      tvmazeTestLabels.searchQuery,
+    )
+  })
+
+  it('collapses desktop search when navigating away and keeps the query', async () => {
+    renderApp({ path: `/search?q=${tvmazeTestLabels.searchQuery}` })
+
+    expect(screen.getByLabelText('Search titles, genres, and keywords')).toHaveValue(
+      tvmazeTestLabels.searchQuery,
+    )
+
+    fireEvent.click(screen.getByRole('navigation', { name: 'Primary' }).querySelector('a[href="/"]')!)
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Search titles, genres, and keywords')).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open search' }))
+
+    expect(screen.getByLabelText('Search titles, genres, and keywords')).toHaveValue(
+      tvmazeTestLabels.searchQuery,
+    )
   })
   it('renders favorites at /favorites', () => {
     renderApp({ path: '/favorites' })

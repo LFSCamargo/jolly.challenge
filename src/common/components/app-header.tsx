@@ -17,7 +17,7 @@ const navLinkClass = (isActive: boolean) =>
   cn(
     buttonVariants({ variant: 'ghost', size: 'sm' }),
     'h-11 rounded-full px-4 text-foreground/90 hover:bg-white/10 hover:text-foreground',
-    isActive && 'bg-white/15 text-foreground',
+    isActive && 'bg-white/15 text-foreground backdrop-blur-lg',
   )
 
 export function AppHeader() {
@@ -35,25 +35,37 @@ export function AppHeader() {
   const [searchQuery, setSearchQuery] = useState(currentQuery)
 
   useEffect(() => {
-    if (!onSearch) {
+    if (onSearch) {
+      setSearchQuery(currentQuery)
+
+      if (isDesktopViewport()) {
+        setIsSearchOpen(true)
+      }
       return
     }
 
-    setSearchQuery(currentQuery)
-
-    if (isDesktopViewport()) {
-      setIsSearchOpen(true)
-    }
+    setIsSearchOpen(false)
   }, [currentQuery, onSearch])
 
   useEffect(() => {
-    if (isSearchOpen && isDesktopViewport()) {
+    if (isSearchOpen && isDesktopViewport() && onSearch) {
       inputRef.current?.focus()
     }
-  }, [isSearchOpen])
+  }, [isSearchOpen, onSearch])
+
+  const openSearch = () => {
+    setIsSearchOpen(true)
+
+    if (onSearch) {
+      return
+    }
+
+    const trimmedQuery = searchQuery.trim()
+    const queryString = trimmedQuery ? `?q=${encodeURIComponent(trimmedQuery)}` : ''
+    void navigate(`/search${queryString}`)
+  }
 
   const exitSearchToHome = () => {
-    setSearchQuery('')
     setIsSearchOpen(false)
     void navigate('/', { replace: true })
   }
@@ -108,7 +120,7 @@ export function AppHeader() {
                   event.preventDefault()
                 }}
               >
-                <InputGroup className="h-11 w-[min(42vw,24rem)] rounded-full border-white/30 bg-black/85 shadow-lg shadow-black/30 transition-[width,border-color,box-shadow] duration-300 focus-within:w-[min(46vw,28rem)] focus-within:border-white/60 motion-reduce:transition-none">
+                <InputGroup className="h-11 w-[min(42vw,24rem)] rounded-full border-white/25 bg-black/55 shadow-lg shadow-black/30 backdrop-blur-lg transition-[width,border-color,box-shadow,background-color] duration-300 focus-within:w-[min(46vw,28rem)] focus-within:border-white/50 focus-within:bg-black/70 motion-reduce:transition-none">
                   <InputGroupInput
                     ref={inputRef}
                     aria-label="Search titles, genres, and keywords"
@@ -145,9 +157,7 @@ export function AppHeader() {
                 className={navLinkClass(onSearch)}
                 aria-current={onSearch ? 'page' : undefined}
                 aria-label="Open search"
-                onClick={() => {
-                  setIsSearchOpen(true)
-                }}
+                onClick={openSearch}
               >
                 <SearchIcon data-icon="inline-start" />
                 Search
