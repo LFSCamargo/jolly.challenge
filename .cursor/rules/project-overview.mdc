@@ -35,5 +35,6 @@ Feature code lives under `src/modules/<name>/` with `pages/`, `components/`, `ho
 
 - Architecture and requirements: [docs/DESIGN_DOC.md](../../docs/DESIGN_DOC.md)
 - Frontend module layout: [docs/FRONTEND.mdc](../../docs/FRONTEND.mdc)
+- Design & UX planning (web + mobile): `.cursor/rules/design-ux.mdc`
 - Module layout checker: `.cursor/rules/spaghetti-checker.mdc`
 - Quality gates: `.cursor/rules/quality-gating.mdc`

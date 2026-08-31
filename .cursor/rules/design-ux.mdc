@@ -1,0 +1,58 @@
+---
+description: Plan design and usability for web and mobile before implementing UI
+alwaysApply: true
+---
+
+# Design & UX Planning Rule
+
+Do not jump straight to implementation. Before writing UI for a feature or bug
+fix, plan the **design** and **usability** for **web and mobile**. Compose
+shadcn primitives only — see [docs/DESIGN_DOC.md](../../docs/DESIGN_DOC.md) §6.
+
+## Plan first (required)
+
+Write a short plan covering:
+
+1. **Job to be done** — what the user is trying to finish on this screen.
+2. **Surfaces** — which routes/pages share the state (list, detail, favorites, chrome).
+3. **States** — default, loading, empty, error, filtered/search, one-item, overflow.
+4. **Breakpoints** — mobile (~375px) and desktop (~1280px). Tablet follows the closer of the two.
+5. **Input** — touch (44px targets, no hover-only actions) and pointer/keyboard.
+
+If the plan is missing a mobile or desktop path, stop and complete it before coding.
+
+## Layout
+
+| Viewport | Expectation |
+| -------- | ----------- |
+| Mobile | Single column. Primary action reachable with the thumb. Search + filter stack; they do not sit in one cramped row. Nav stays usable (wrap or compact header). Cards are full-width with readable type. |
+| Desktop | Use width for a card grid and side-by-side search/filter. Do not hide mobile-only flows — same tasks must be possible. |
+
+```tsx
+// ❌ BAD — hover-only favorite; filter row overflows on 375px
+<div className="flex items-center gap-4">
+  <Input className="w-80" />
+  <Select />
+  <button className="opacity-0 group-hover:opacity-100">♥</button>
+</div>
+
+// ✅ GOOD — stack on small screens; always-visible control
+<div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+  <Input aria-label="Search shows" />
+  <Select /* status filter */ />
+</div>
+<Button variant="ghost" size="icon" aria-label="Add to favorites" />
+```
+
+## Usability checklist
+
+- Same tasks work on both viewports (browse, search, filter, open detail, favorite).
+- Loading / empty / error are distinct and not color-only.
+- Images have alt text; controls have accessible names.
+- Infinite lists do not trap keyboard or hide the header.
+- Do not recreate Button, Card, Input, Select, or Dropdown Menu.
+
+## Verify
+
+Exercise the flow on **desktop and a ~375px viewport** (browser tools or the
+closest substitute). A single desktop screenshot is not done.

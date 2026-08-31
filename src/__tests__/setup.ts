@@ -1,47 +1,22 @@
+import { cleanup } from '@testing-library/react'
+import { afterEach, vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
+import { useFavoritesStore } from '@/modules/favorites/stores/favorites.store'
 
-function createMemoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    clear() {
-      store.clear()
-    },
-    getItem(key: string) {
-      return store.get(key) ?? null
-    },
-    key(index: number) {
-      return [...store.keys()][index] ?? null
-    },
-    removeItem(key: string) {
-      store.delete(key)
-    },
-    setItem(key: string, value: string) {
-      store.set(key, String(value))
-    },
-  }
+class IntersectionObserverMock {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
 }
 
-const needsLocalStoragePolyfill =
-  typeof globalThis.localStorage === 'undefined' ||
-  typeof globalThis.localStorage.getItem !== 'function'
+Object.defineProperty(globalThis, 'IntersectionObserver', {
+  writable: true,
+  configurable: true,
+  value: IntersectionObserverMock,
+})
 
-if (needsLocalStoragePolyfill) {
-  const storage = createMemoryStorage()
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: storage,
-    writable: true,
-    configurable: true,
-  })
-
-  if (typeof window !== 'undefined') {
-    Object.defineProperty(window, 'localStorage', {
-      value: storage,
-      writable: true,
-      configurable: true,
-    })
-  }
-}
+afterEach(() => {
+  cleanup()
+  useFavoritesStore.persist.clearStorage()
+  useFavoritesStore.setState({ favorites: [] })
+})

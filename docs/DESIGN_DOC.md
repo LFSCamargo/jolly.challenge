@@ -11,7 +11,7 @@ This document is the product and architecture source of truth. Implementation de
 Ship a React web app a reviewer can clone, run locally, and use to:
 
 1. Browse shows in an infinitely scrolling list.
-2. Search by name and filter by status.
+2. Search by name and filter by status, and favorites.
 3. Open a show to see details and episodes.
 4. Favorite / unfavorite shows, with persistence and a dedicated view.
 
@@ -53,21 +53,21 @@ The assignment allows reasonable calls when something is ambiguous. These are th
 
 These constrain _how_ we build FR-1–FR-10. They are also definition of done.
 
-| ID     | Requirement                                      | Why                                                                                                                                                                                  |
-| ------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| NFR-1  | **TVMaze rate limit: ~20 requests / 10 seconds** | Assignment. Caching, debounce, and pagination strategy exist to stay under this cap.                                                                                                 |
-| NFR-2  | **No API key / no auth / no backend**            | Public TVMaze API; all state runs in the browser.                                                                                                                                    |
-| NFR-3  | **Perceived performance**                        | Debounced search, cached detail/episode reads, infinite query so returning to the list does not refetch every page.                                                                  |
-| NFR-4  | **Correctness under concurrency**                | No stale search results, no mixed browse/search rows, no favorite-count drift. See §5.3.                                                                                             |
-| NFR-5  | **Accessibility**                                | Keyboard-usable controls (shadcn Select, Dropdown Menu, Button, Input). Images have alt text. Loading/error/empty are announced, not color-only.                                     |
-| NFR-6  | **Responsive layout**                            | Usable from ~375px to desktop. List is a responsive card grid; detail is a readable single column.                                                                                   |
-| NFR-7  | **Consistent design system**                     | **All core UI primitives come from shadcn/ui. Do not recreate them.** See §6.                                                                                                        |
-| NFR-8  | **Type-safe API boundary**                       | Zod schemas parse TVMaze payloads. Invalid records fail closed (skip or error), never crash the tree with `any`.                                                                     |
-| NFR-9  | **Testability**                                  | Vitest + Testing Library. Network is mocked. New behavior is test-first. Target ≥ 80% statement coverage on `src/`.                                                                  |
-| NFR-10 | **Quality gates**                                | `check:spaghetti`, `check:security`, `knip`, lint, typecheck, tests, build, audit, docs sync — all green before done.                                                                |
-| NFR-11 | **Deterministic tests**                          | No real network in unit tests. Fixtures for list, search, detail, and episode shapes.                                                                                                |
-| NFR-12 | **Security (frontend)**                          | No secrets in source or `localStorage`. No `dangerouslySetInnerHTML` for show summaries unless HTML is sanitized. Prefer text extraction or a sanitizer if summary HTML is rendered. |
-| NFR-13 | **Submission artifacts**                         | Public GitHub repo (or shared access) and a README covering run instructions, decisions/trade-offs, what was left out, and AI-usage disclosure.                                      |
+| ID     | Requirement                                      | Why                                                                                                                                                                                                                                |
+| ------ | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-1  | **TVMaze rate limit: ~20 requests / 10 seconds** | Assignment. Caching, debounce, and pagination strategy exist to stay under this cap.                                                                                                                                               |
+| NFR-2  | **No API key / no auth / no backend**            | Public TVMaze API; all state runs in the browser.                                                                                                                                                                                  |
+| NFR-3  | **Perceived performance**                        | Debounced search, cached detail/episode reads, infinite query so returning to the list does not refetch every page.                                                                                                                |
+| NFR-4  | **Correctness under concurrency**                | No stale search results, no mixed browse/search rows, no favorite-count drift. See §5.3.                                                                                                                                           |
+| NFR-5  | **Accessibility**                                | Keyboard-usable controls (shadcn Select, Dropdown Menu, Button, Input). Images have alt text. Loading/error/empty are announced, not color-only.                                                                                   |
+| NFR-6  | **Responsive layout**                            | Usable from ~375px to desktop. Browse uses a cinematic hero plus horizontal poster rows; search and My List use a responsive grid. Detail is a readable single column. Plan web + mobile UX first (`.cursor/rules/design-ux.mdc`). |
+| NFR-7  | **Consistent design system**                     | **All core UI primitives come from shadcn/ui. Do not recreate them.** See §6.                                                                                                                                                      |
+| NFR-8  | **Type-safe API boundary**                       | Zod schemas parse TVMaze payloads. Invalid records fail closed (skip or error), never crash the tree with `any`.                                                                                                                   |
+| NFR-9  | **Testability**                                  | Vitest + Testing Library. Network is mocked. New behavior is test-first. Target ≥ 80% statement coverage on `src/`.                                                                                                                |
+| NFR-10 | **Quality gates**                                | `check:spaghetti`, `check:security`, `knip`, lint, typecheck, tests, build, audit, docs sync — all green before done.                                                                                                              |
+| NFR-11 | **Deterministic tests**                          | No real network in unit tests. Fixtures for list, search, detail, and episode shapes.                                                                                                                                              |
+| NFR-12 | **Security (frontend)**                          | No secrets in source or `localStorage`. No `dangerouslySetInnerHTML` for show summaries unless HTML is sanitized. Prefer text extraction or a sanitizer if summary HTML is rendered.                                               |
+| NFR-13 | **Submission artifacts**                         | Public GitHub repo (or shared access) and a README covering run instructions, decisions/trade-offs, what was left out, and AI-usage disclosure.                                                                                    |
 
 ---
 
@@ -111,20 +111,20 @@ These constrain _how_ we build FR-1–FR-10. They are also definition of done.
 
 **Choice:** `@tanstack/react-query` is the cache and request lifecycle layer for every TVMaze read.
 
-**Why not `useEffect` + local state:** infinite scroll, search, detail, and episodes share data. Manual caching will either refetch too often (rate limit) or serve stale rows after races. React Query gives request identity (`queryKey`), cancellation (`AbortSignal`), retries, and status flags (`isPending`, `isError`, `isFetchingNextPage`) that map directly to FR-2.
+**Why not** `useEffect` **+ local state:** infinite scroll, search, detail, and episodes share data. Manual caching will either refetch too often (rate limit) or serve stale rows after races. React Query gives request identity (`queryKey`), cancellation (`AbortSignal`), retries, and status flags (`isPending`, `isError`, `isFetchingNextPage`) that map directly to FR-2.
 
 **Cache policy (locked):**
 
 | Query       | Key (conceptual)                      | Strategy                                                                                                 |
 | ----------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Browse list | `['shows', 'list']`                   | `useInfiniteQuery`. Page param from `GET /shows?page=`. `staleTime` ~ 5 minutes.                         |
+| Browse list | `['shows', 'list']`                   | `useInfiniteQuery`. Page param from `GET /shows?page=`. `staleTime` 1 minute.                            |
 | Search      | `['shows', 'search', debouncedQuery]` | `useQuery`. Enabled only when `debouncedQuery` is non-empty.                                             |
 | Show detail | `['shows', showId]`                   | `useQuery`. Populated from list data via `placeholderData` / initial data when we already have the show. |
 | Episodes    | `['shows', showId, 'episodes']`       | `useQuery`. Cached per show so back-navigation is instant.                                               |
 
 **Rate-limit alignment (NFR-1):**
 
-- Default `staleTime` so revisiting a show does not hit the network.
+- Default `staleTime` of **1 minute** so revisiting a show or the list does not hit the network while the cache is still fresh.
 - `gcTime` long enough that back-stack navigation reuses pages.
 - Infinite query keeps already-fetched pages; scrolling up does not refetch.
 - Search does not run until debounce settles (see §5.2).
@@ -153,7 +153,7 @@ Several races exist in this UI. We treat them as required correctness, not polis
 | --------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Fast typing `g` → `gi` → `girls`        | Response for `gi` arrives after `girls` and overwrites the list              | Debounce + React Query: each `queryKey` is unique; in-flight query is **aborted** via `signal` when the key changes. UI only binds to the current key. |
 | Search then clear                       | Search hits mix into paginated browse rows                                   | Browse and search are **different queries**. The page renders exactly one of: infinite list **or** search results, never concatenated.                 |
-| Status filter while a page is in flight | Filter applied to a partial page, then a new page of unfiltered rows appends | Filter is a **pure derivation** of `(pages \| searchHits, status)`. New pages flow through the same derivation.                                        |
+| Status filter while a page is in flight | Filter applied to a partial page, then a new page of unfiltered rows appends | Filter is a **pure derivation** of `(pages                                                                                                             | searchHits, status)`. New pages flow through the same derivation. |
 | Open show A, quickly open show B        | Episodes for A paint on B’s page                                             | Detail/episode `queryKey` includes `showId`. React Query will not apply A’s data to B’s observers.                                                     |
 | Favorite toggle vs reload               | Two tabs or Strict Mode double-write                                         | Favorites store writes go through a single module store; persist is the serialized snapshot, not ad-hoc `localStorage.setItem` in components.          |
 | Infinite scroll + search                | Sentinel fires and requests `page=N` during search                           | Infinite query `enabled` is false while search is active.                                                                                              |
@@ -168,7 +168,7 @@ shadcn/ui Nova primitives emit v4-only utilities (`gap-(--card-spacing)`, `data-
 
 **Rules:**
 
-- Layout and spacing via utility classes (`flex`, `gap-*`, grid). **Never** `space-y-*` / `space-x-*`.
+- Layout and spacing via utility classes (`flex`, `gap-*`, grid). **Never** `space-y-`* / `space-x-*`.
 - Color and typography via **semantic tokens** (`bg-background`, `text-muted-foreground`, `bg-card`). No raw `bg-blue-500` in product UI.
 - `className` on shadcn components is for **layout** (width, grid placement), not for re-skinning variants that already exist.
 
@@ -190,7 +190,7 @@ Installed now (via ShadCN MCP + CLI):
 | **Select**        | `src/components/ui/select.tsx`        | Status filter (All / Running / Ended / To Be Determined)                    |
 | **Dropdown Menu** | `src/components/ui/dropdown-menu.tsx` | Overflow actions (e.g. card menus) where a menu is a better fit than Select |
 
-Likely follow-ups, still from shadcn, added only when a screen needs them — **not** custom markup: `Badge` (status), `Skeleton` (list placeholders), `Empty`, `Spinner`, `Separator`, `Field` / `InputGroup` (labeled search).
+Also installed: `Badge`, `Skeleton`, `Empty`, `Spinner`, `Separator`, `ToggleGroup` (status filter), `InputGroup` (search).
 
 ### 5.6 Modular folders — one scoped part of the app per module
 
@@ -230,22 +230,28 @@ Cross-module imports go through `routes.ts` / a public barrel — never another 
 
 ## 6. Design system law — do not recreate core components
 
-**All core components must not be re-created.** The design system is shadcn/ui. Product UI is composition of those primitives plus Tailwind layout utilities.
+**Visual language:** Netflix-inspired TV UI — cinematic black canvas (`#000`), Netflix red
+primary (`#E50914`), white foreground, muted metadata (`#b3b3b3`), pill navigation and CTAs,
+hero spotlight for the featured show, and horizontal poster rows (“Your Next Watch”). Tokens
+live in `src/styles/index.css`; compose shadcn primitives only — never fork Button/Card/etc.
+
+**All core components must not be re-created.** The design system is shadcn/ui. Product UI is
+composition of those primitives plus Tailwind layout utilities.
 
 ### 6.1 Must use (never duplicate)
 
-| Need                          | Use                                                                                               | Do not                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Actions                       | `<Button variant="…" size="…">`                                                                   | Styled `<button>` / custom `IconButton`                                                  |
-| Text fields                   | `<Input>` (and later `InputGroup` / `Field`)                                                      | Styled `<input>`                                                                         |
-| Status filter / single choice | `<Select>` + `SelectGroup` + `SelectItem`                                                         | Native `<select>` restyle, or a row of handmade chips unless we add shadcn `ToggleGroup` |
-| Menus                         | `<DropdownMenu>` + `DropdownMenuGroup` + `DropdownMenuItem`                                       | Absolute-positioned `<div>` lists                                                        |
-| Surfaces                      | `<Card>`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`, `CardAction` | Bespoke “show card” chrome that reimplements padding, radius, and rings                  |
-| Loading placeholders          | shadcn `Skeleton` (when added)                                                                    | Hand-rolled `animate-pulse` boxes                                                        |
-| Empty states                  | shadcn `Empty` (when added)                                                                       | One-off dashed-border empty markup                                                       |
-| Status pills                  | shadcn `Badge` (when added)                                                                       | Custom colored `<span>`s                                                                 |
-| Toasts                        | `sonner` (if/when added)                                                                          | Custom toast stack                                                                       |
-| Class merging                 | `cn()` from `@/lib/utils`                                                                         | String concat / ad-hoc ternaries                                                         |
+| Need                          | Use                                                                                               | Do not                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Actions                       | `<Button variant="…" size="…">`                                                                   | Styled `<button>` / custom `IconButton`                                 |
+| Text fields                   | `<Input>` (and later `InputGroup` / `Field`)                                                      | Styled `<input>`                                                        |
+| Status filter / single choice | `<ToggleGroup>` + `ToggleGroupItem` (All / Running / Ended / TBD)                                 | Native `<select>` restyle, or a row of handmade chips                   |
+| Menus                         | `<DropdownMenu>` + `DropdownMenuGroup` + `DropdownMenuItem`                                       | Absolute-positioned `<div>` lists                                       |
+| Surfaces                      | `<Card>`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`, `CardAction` | Bespoke “show card” chrome that reimplements padding, radius, and rings |
+| Loading placeholders          | shadcn `Skeleton` (when added)                                                                    | Hand-rolled `animate-pulse` boxes                                       |
+| Empty states                  | shadcn `Empty` (when added)                                                                       | One-off dashed-border empty markup                                      |
+| Status pills                  | shadcn `Badge` (when added)                                                                       | Custom colored `<span>`s                                                |
+| Toasts                        | `sonner` (if/when added)                                                                          | Custom toast stack                                                      |
+| Class merging                 | `cn()` from `@/lib/utils`                                                                         | String concat / ad-hoc ternaries                                        |
 
 ### 6.2 Allowed custom code
 
