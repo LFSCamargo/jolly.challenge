@@ -26,6 +26,9 @@ describe('ShowsPage', () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Your Next Watch' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'All Shows' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Drama' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Comedy' })).not.toBeInTheDocument()
     expect(screen.getAllByText(tvmazeTestLabels.endedShowName).length).toBeGreaterThan(0)
   })
 
@@ -204,9 +207,9 @@ describe('ShowsPage', () => {
       expect(vi.mocked(globalThis.fetch).mock.calls.length).toBe(callsAfterEnd)
     })
     expect(
-      vi.mocked(globalThis.fetch).mock.calls.some(([input]) =>
-        String(input).includes('/shows?page=2'),
-      ),
+      vi
+        .mocked(globalThis.fetch)
+        .mock.calls.some(([input]) => String(input).includes('/shows?page=2')),
     ).toBe(false)
     expect(screen.queryByText('Loading more shows')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Loading shows')).not.toBeInTheDocument()

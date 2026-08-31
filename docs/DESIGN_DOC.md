@@ -60,7 +60,7 @@ These constrain _how_ we build FR-1–FR-10. They are also definition of done.
 | NFR-3  | **Perceived performance**                        | Debounced search, cached detail/episode reads, infinite query so returning to the list does not refetch every page.                                                                                                                |
 | NFR-4  | **Correctness under concurrency**                | No stale search results, no mixed browse/search rows, no favorite-count drift. See §5.3.                                                                                                                                           |
 | NFR-5  | **Accessibility**                                | Keyboard-usable controls (shadcn Select, Dropdown Menu, Button, Input). Images have alt text. Loading/error/empty are announced, not color-only.                                                                                   |
-| NFR-6  | **Responsive layout**                            | Usable from ~375px to desktop. Browse uses a cinematic hero plus horizontal poster rows; search and My List use a responsive grid. Detail is a readable single column. Plan web + mobile UX first (`.cursor/rules/design-ux.mdc`). |
+| NFR-6  | **Responsive layout**                            | Usable from ~375px to desktop. Browse uses a cinematic hero, one Your Next Watch rail, and a growing poster grid for infinite scroll; search and My List use a responsive grid. Detail is a readable single column. Plan web + mobile UX first (`.cursor/rules/design-ux.mdc`). |
 | NFR-7  | **Consistent design system**                     | **All core UI primitives come from shadcn/ui. Do not recreate them.** See §6.                                                                                                                                                      |
 | NFR-8  | **Type-safe API boundary**                       | Zod schemas parse TVMaze payloads. Invalid records fail closed (skip or error), never crash the tree with `any`.                                                                                                                   |
 | NFR-9  | **Testability**                                  | Vitest + Testing Library. Network is mocked. New behavior is test-first. Target ≥ 80% statement coverage on `src/`.                                                                                                                |
@@ -131,7 +131,8 @@ These constrain _how_ we build FR-1–FR-10. They are also definition of done.
 - No polling. No prefetch-on-hover of every card (that would burn the 20/10s budget).
 - TVMaze's terminal pagination `404` is normalized to an empty page and marks the
   catalog complete — that page is never requested again and no end-of-list loader is shown.
-- Browse rows are append-only chunks so new pages never reshuffle cards into earlier rows.
+- Browse keeps a stable Your Next Watch rail. Later pages append to one All Shows grid
+  so cards never reshuffle across fake category rows.
 - A `429` retries in the background with backoff. Loaded rows and scroll position stay put;
   no footer spinner or error banner is swapped in.
 
@@ -241,7 +242,7 @@ Cross-module imports go through `routes.ts` / a public barrel — never another 
 
 **Visual language:** Netflix-inspired TV UI — cinematic black canvas (`#000`), Netflix red
 primary (`#E50914`), white foreground, muted metadata (`#b3b3b3`), pill navigation and CTAs,
-hero spotlight for the featured show, and horizontal poster rows (“Your Next Watch”). Tokens
+hero spotlight for the featured show, a Your Next Watch rail, and an infinite All Shows grid. Tokens
 live in `src/styles/index.css`; compose shadcn primitives only — never fork Button/Card/etc.
 
 **All core components must not be re-created.** The design system is shadcn/ui. Product UI is

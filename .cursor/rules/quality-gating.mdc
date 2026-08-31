@@ -10,21 +10,23 @@ task complete and before committing.
 
 ## Gates (all must pass)
 
-1. **Spaghetti layout** `npm run check:spaghetti`. Module files follow
+Use `npm run <script>` or `pnpm <script>` — both package managers are supported.
+
+1. **Spaghetti layout** `npm run check:spaghetti` / `pnpm check:spaghetti`. Module files follow
    `.cursor/rules/spaghetti-checker.mdc` (pages/, components/, hooks/, `__tests__/`).
-2. **Security (static)** `npm run check:security`. Frontend rules per
+2. **Security (static)** `npm run check:security` / `pnpm check:security`. Frontend rules per
    `.cursor/rules/security-first.mdc` (`scripts/check-security.mjs`).
-3. **Knip (dead code)** `npm run knip`. Removes drift from unused files, dependencies,
+3. **Knip (dead code)** `npm run knip` / `pnpm knip`. Removes drift from unused files, dependencies,
    and exports. Config: `knip.json`. Fix every reported issue — delete unused modules,
    drop unused packages, and remove unreferenced exports instead of suppressing findings.
-4. **Lint** `npm run lint` (ESLint + Prettier + `prettier-plugin-tailwindcss`). No errors;
+4. **Lint** `npm run lint` / `pnpm lint` (ESLint + Prettier + `prettier-plugin-tailwindcss`). No errors;
    fix warnings you introduced.
-5. **Typecheck** `npm run typecheck` (`tsc --noEmit`). Zero type errors.
-6. **Tests** `npm run test`. All unit tests pass; target ≥ 80% statement coverage on
+5. **Typecheck** `npm run typecheck` / `pnpm typecheck` (`tsc --noEmit`). Zero type errors.
+6. **Tests** `npm run test` / `pnpm test`. All unit tests pass; target ≥ 80% statement coverage on
    `src/` (see `.cursor/rules/test-driven.mdc`).
-7. **Build** `npm run build`. Production build succeeds.
+7. **Build** `npm run build` / `pnpm build`. Production build succeeds.
 8. **Docs sync** `docs/` updated per `.cursor/rules/docs-sync.mdc`.
-9. **Auditing** `npm run audit`. No moderate+ vulnerabilities.
+9. **Auditing** `npm run audit` / `pnpm audit`. No moderate+ vulnerabilities.
 
 ## Knip workflow
 
@@ -33,11 +35,12 @@ When `npm run knip` fails:
 | Issue | Action |
 | ----- | ------ |
 | Unused file | Delete it, or wire it up if the feature is incomplete |
-| Unused dependency | Remove from `package.json` and run `npm install` |
+| Unused dependency | Remove from `package.json` and run `npm install` or `pnpm install` |
 | Unused export | Remove the export, inline the helper, or delete dead code |
 | Unlisted binary | Add to `knip.json` `ignoreBinaries` only for optional external CLI tools |
 
-Pre-commit runs `npm run knip` via `scripts/pre-commit.sh`.
+Pre-commit runs knip via `scripts/pre-commit.sh` using whichever package manager
+installed `node_modules` (pnpm if `node_modules/.pnpm` exists, otherwise npm).
 
 ## Rules
 

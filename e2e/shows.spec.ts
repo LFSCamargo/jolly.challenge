@@ -13,6 +13,7 @@ test.describe('Shows browse', () => {
       page.getByRole('heading', { name: tvmazeTestLabels.featuredShowName, level: 1 }),
     ).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Your Next Watch' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'All Shows' })).toBeVisible()
     await expect(page.getByText(tvmazeTestLabels.endedShowName).first()).toBeVisible()
   })
 

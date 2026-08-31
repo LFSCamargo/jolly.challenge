@@ -1,7 +1,13 @@
+import { existsSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
 
 const port = 5173
 const baseURL = `http://localhost:${port}`
+const packageManager =
+  process.env.npm_config_user_agent?.includes('pnpm') ||
+  existsSync('node_modules/.pnpm')
+    ? 'pnpm'
+    : 'npm'
 
 export default defineConfig({
   testDir: './e2e',
@@ -26,7 +32,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --host 127.0.0.1 --port ${port}`,
+    command: `${packageManager} run dev -- --host 127.0.0.1 --port ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

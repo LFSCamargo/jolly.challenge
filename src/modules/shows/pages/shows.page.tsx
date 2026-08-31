@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useShowsList } from '../hooks/use-shows-list'
 import { useInfiniteScroll } from '../hooks/use-infinite-scroll'
-import { buildShowRows } from '../services/build-show-rows.service'
+import { buildBrowseSections } from '../services/build-browse-sections.service'
 import { ShowsBrowseRows } from '../components/shows-browse-rows'
 import { ShowsGrid } from '../components/shows-grid'
 import { ShowsHero } from '../components/shows-hero'
@@ -50,16 +50,16 @@ export function ShowsPage() {
   const featuredShow = !isSearchActive
     ? (shows.find((show) => show.id === lockedFeaturedIdRef.current) ?? shows[0])
     : undefined
-  const rows = useMemo(
+  const { nextWatch, remaining } = useMemo(
     () =>
-      buildShowRows(shows, {
+      buildBrowseSections(shows, {
         featuredShowId: featuredShow?.id,
       }),
     [featuredShow?.id, shows],
   )
 
   return (
-    <div className="flex min-w-0 flex-col overflow-x-hidden [overflow-anchor:none] pb-24 md:pb-8">
+    <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 [overflow-anchor:none] md:pb-8">
       {featuredShow ? <ShowsHero show={featuredShow} /> : null}
 
       <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 py-6 sm:px-8 lg:px-12">
@@ -94,11 +94,21 @@ export function ShowsPage() {
           <ShowsGrid shows={shows} title="Search Results" />
         ) : null}
 
-        {showCatalog && !isSearchActive && rows.length > 0 ? (
-          <ShowsBrowseRows rows={rows} sentinelRef={sentinelRef} />
+        {showCatalog &&
+        !isSearchActive &&
+        (nextWatch.length > 0 || remaining.length > 0) ? (
+          <ShowsBrowseRows
+            nextWatch={nextWatch}
+            remaining={remaining}
+            sentinelRef={sentinelRef}
+          />
         ) : null}
 
-        {showCatalog && !isSearchActive && rows.length === 0 && featuredShow ? (
+        {showCatalog &&
+        !isSearchActive &&
+        nextWatch.length === 0 &&
+        remaining.length === 0 &&
+        featuredShow ? (
           <p className="text-muted-foreground text-sm">
             No additional shows match your filters. Try another status or clear search.
           </p>

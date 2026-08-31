@@ -9,9 +9,15 @@ Frontend-only React app for browsing TV shows via the [TVMaze API](https://www.t
 ## Quick start
 
 ```bash
+# npm
 npm install
 cp .env.example .env   # optional — leave API_KEY empty for TVMaze
 npm run dev
+
+# or pnpm (Node 22+, pnpm 11)
+pnpm install
+cp .env.example .env
+pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
@@ -23,15 +29,15 @@ Open [http://localhost:5173](http://localhost:5173).
 ### Quality gates
 
 ```bash
-npm run check:spaghetti
-npm run check:security
-npm run knip
-npm run lint
-npm run typecheck
-npm run test          # Vitest (unit/integration)
-npm run test:e2e      # Playwright (E2E, desktop + mobile)
-npm run build
-npm run audit
+npm run check:spaghetti   # or: pnpm check:spaghetti
+npm run check:security    # or: pnpm check:security
+npm run knip              # or: pnpm knip
+npm run lint              # or: pnpm lint
+npm run typecheck         # or: pnpm typecheck
+npm run test              # or: pnpm test          (Vitest)
+npm run test:e2e          # or: pnpm test:e2e      (Playwright)
+npm run build             # or: pnpm build
+npm run audit             # or: pnpm audit
 ```
 
 ---
@@ -43,7 +49,7 @@ npm run audit
 
 | Route            | Screen      | Highlights                                                                               |
 | ---------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| `/`              | Shows       | Infinite browse, debounced search, status filter, cinematic hero, horizontal poster rows |
+| `/`              | Shows       | Infinite browse, debounced search, status filter, cinematic hero, next-watch rail + growing grid |
 | `/shows/:showId` | Show detail | Backdrop hero, summary, genres, episodes grouped by season                               |
 | `/favorites`     | My List     | Persisted favorites (localStorage), empty state, horizontal row                          |
 | `*`              | Not found   | 404 page                                                                                 |
@@ -134,7 +140,7 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 
 ### Design decisions
 
-- **Netflix-inspired UI** on top of shadcn — black canvas, red accent (`#E50914`), pill nav/CTAs, cinematic hero gradients, poster-first cards, horizontal scroll rows (“Your Next Watch” / “My List”)
+- **Netflix-inspired UI** on top of shadcn — black canvas, red accent (`#E50914`), pill nav/CTAs, cinematic hero gradients, poster-first cards, a Your Next Watch rail, and an infinite All Shows grid
 - **shadcn additions via MCP/CLI:** `badge`, `skeleton`, `separator`, `empty`, `spinner`, `toggle-group`
 - **Mobile + desktop** — stacked search/filter on small screens; same tasks on both viewports; touch-friendly heart buttons (no hover-only actions)
 - **Client-side status filter** — TVMaze has no status query param; filter accumulated browse pages and search results locally

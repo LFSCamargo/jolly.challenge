@@ -23,6 +23,15 @@ system): [docs/DESIGN_DOC.md](DESIGN_DOC.md).
 ## Folder structure
 
 ```
+pnpm-workspace.yaml         # pnpm 11 settings (esbuild allowBuilds)
+package-lock.json           # npm lockfile
+pnpm-lock.yaml              # pnpm lockfile
+scripts/
+  audit.mjs                 # npm/pnpm-aware vulnerability audit
+  package-manager.mjs       # detect npm vs pnpm
+  pre-commit.sh             # husky gates
+  check-spaghetti.mjs
+  check-security.mjs
 test-fixtures/              # TVMaze mock data (test/e2e only)
   tvmaze.mock-data.ts       # Real API snapshot bundle (spaghetti-exempt)
   tvmaze-mock-handler.ts    # Routes mocked fetch / Playwright responses
@@ -41,7 +50,7 @@ src/
     strip-html.ts
     utils.ts             # cn()
   modules/
-    shows/               # Browse rows, search grid, filter, hero, infinite scroll
+    shows/               # Hero + next-watch rail + growing grid, search, filter, infinite scroll
     show-detail/         # Detail hero + episodes by season
     favorites/           # My List (Zustand persist)
   routes/
@@ -62,7 +71,8 @@ in modules or `src/common/`. Compose them (Button + Input + Select + Badge, etc.
 See [DESIGN_DOC.md](DESIGN_DOC.md) §6.
 
 **Visual language:** Netflix-inspired TV UI — black canvas, Netflix red accent,
-cinematic hero, pill CTAs, horizontal poster rows. Tokens in `src/styles/index.css`.
+cinematic hero, pill CTAs, a Your Next Watch rail, and an infinite All Shows grid.
+Tokens in `src/styles/index.css`.
 
 Installed primitives: `button`, `card`, `input`, `select`, `dropdown-menu`,
 `badge`, `skeleton`, `separator`, `empty`, `spinner`, `toggle`, `toggle-group`,
@@ -87,17 +97,22 @@ file by design). It is exempt from the one-component-per-file rule.
 
 ## Scripts
 
+Scripts work with **npm or pnpm** (`npm run <script>` / `pnpm <script>`). The
+repo keeps both lockfiles. `package.json` pins `packageManager` to pnpm 11 for
+Corepack; `pnpm-workspace.yaml` allows the `esbuild` install build Vite needs.
+
 | Command | Purpose |
 | ------- | ------- |
-| `npm run dev` | Start Vite dev server (port 5173) |
-| `npm run build` | Typecheck + production build |
-| `npm run test` | Run Vitest unit tests |
-| `npm run test:e2e` | Run Playwright end-to-end tests |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript |
-| `npm run check:spaghetti` | Module layout checker |
-| `npm run check:security` | Frontend security checker |
-| `npm run knip` | Dead code / unused dependency scan |
+| `npm run dev` / `pnpm dev` | Start Vite dev server (port 5173) |
+| `npm run build` / `pnpm build` | Typecheck + production build |
+| `npm run test` / `pnpm test` | Run Vitest unit tests |
+| `npm run test:e2e` / `pnpm test:e2e` | Run Playwright end-to-end tests |
+| `npm run lint` / `pnpm lint` | ESLint |
+| `npm run typecheck` / `pnpm typecheck` | TypeScript |
+| `npm run check:spaghetti` / `pnpm check:spaghetti` | Module layout checker |
+| `npm run check:security` / `pnpm check:security` | Frontend security checker |
+| `npm run knip` / `pnpm knip` | Dead code / unused dependency scan |
+| `npm run audit` / `pnpm audit` | Dependency vulnerability audit |
 
 ## Environment
 
@@ -122,6 +137,7 @@ mobile per `.cursor/rules/design-ux.mdc` before implementing.
 
 Browse pagination: TVMaze `404` marks the catalog complete (no further fetches, no
 end-of-list loader). `429` retries silently in the background without moving
-already-rendered rows. Browse rows are append-only chunks.
+already-rendered cards. Browse is a stable Your Next Watch rail plus one growing
+All Shows grid — not genre or category sections.
 
 Add new routes in `src/routes/index.tsx` and create matching modules under `src/modules/`.
