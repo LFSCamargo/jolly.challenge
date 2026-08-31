@@ -1,7 +1,10 @@
 # Jolly Challenge — Frontend
 
-Frontend-only React application for the Jolly coding challenge. No backend — all logic
-and state run in the browser.
+Frontend-only React application for the Jolly coding challenge (Show Explorer).
+No backend — all logic and state run in the browser.
+
+Product and architecture (requirements, React Query, debounce, races, design
+system): [docs/DESIGN_DOC.md](DESIGN_DOC.md).
 
 ## Stack
 
@@ -10,7 +13,9 @@ and state run in the browser.
 | Framework | React 19 + TypeScript |
 | Build | Vite |
 | Routing | React Router |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS v4 |
+| Components | shadcn/ui (Nova, Base UI) — do not recreate primitives |
+| Server state | TanStack Query (React Query) — to be wired with the shows module |
 | Validation | Zod |
 | Tests | Vitest + Testing Library |
 
@@ -20,21 +25,33 @@ and state run in the browser.
 src/
   app/                   # App shell (providers)
   common/
-    components/          # Shared UI components
+    components/          # App compositions that wrap shadcn (one component per file)
     layouts/             # Root and app layouts
+  components/
+    ui/                  # shadcn primitives (Button, Card, Input, Select, Dropdown Menu)
+  lib/
+    utils.ts             # cn()
   modules/
-    home/                # Starter module — replace/extend for the challenge
+    home/                # Starter module — replaced by shows / show-detail / favorites
       pages/
       routes.ts
       __tests__/
   routes/
     index.tsx            # Central route wiring
   styles/
-    index.css            # Tailwind + CSS variables
+    index.css            # Tailwind v4 + shadcn tokens
   __tests__/
     setup.ts             # Vitest setup
   main.tsx
 ```
+
+## Design system
+
+Core UI primitives live in `src/components/ui/` and **must not be re-created**
+in modules or `src/common/`. Compose them (Card + Button + Input + Select).
+See [DESIGN_DOC.md](DESIGN_DOC.md) §6.
+
+Installed primitives: `button`, `card`, `input`, `select`, `dropdown-menu`.
 
 ## Module conventions
 
@@ -47,6 +64,9 @@ Each feature module under `src/modules/<name>/` follows the layout in
 - `schemas/` — Zod schemas (one per file)
 - `routes.ts` — re-exports pages only (no component bodies)
 - `__tests__/` — all tests (never beside source)
+
+`src/components/ui/` is generated shadcn source (multiple related exports per
+file by design). It is exempt from the one-component-per-file rule.
 
 ## Scripts
 
@@ -72,5 +92,7 @@ defined in `.cursor/rules/quality-gating.mdc`.
 | Path | Page | Module |
 | ---- | ---- | ------ |
 | `/` | Home | `home` |
+
+Target routes (see DESIGN_DOC): `/`, `/shows/:showId`, `/favorites`.
 
 Add new routes in `src/routes/index.tsx` and create matching modules under `src/modules/`.

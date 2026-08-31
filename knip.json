@@ -7,5 +7,14 @@
     "scripts/*.{mjs,sh}"
   ],
   "project": ["src/**/*.{ts,tsx}", "scripts/*.{mjs,sh}"],
-  "ignore": ["dist/**"]
+  "ignore": ["dist/**"],
+  "ignoreDependencies": [
+    "@fontsource-variable/geist",
+    "shadcn",
+    "tailwindcss",
+    "tw-animate-css"
+  ],
+  "ignoreIssues": {
+    "src/components/ui/**": ["exports", "types", "nsExports", "nsTypes"]
+  }
 }

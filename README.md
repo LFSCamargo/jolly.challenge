@@ -23,7 +23,8 @@ npm run test
 npm run build
 ```
 
-See [docs/FRONTEND.mdc](docs/FRONTEND.mdc) for architecture and module conventions.
+See [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md) for requirements and architecture, and
+[docs/FRONTEND.mdc](docs/FRONTEND.mdc) for module conventions.
 
 ## AI setup
 

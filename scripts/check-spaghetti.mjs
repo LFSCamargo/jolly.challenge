@@ -142,6 +142,8 @@ const checkReactComponentFile = (filePath) => {
   }
 }
 
+const isShadcnPrimitive = (filePath) => filePath.includes('/src/components/ui/')
+
 const checkUiComponents = () => {
   for (const filePath of walkFiles(COMMON_COMPONENTS, (file) => file.endsWith('.tsx'))) {
     checkReactComponentFile(filePath)
@@ -154,6 +156,10 @@ const checkFile = (filePath) => {
   if (normalized.includes('/src/modules/')) {
     const moduleDir = normalized.split('/modules/')[1]?.split('/')[0]
     if (moduleDir) checkFrontendModule(join(MODULES, moduleDir))
+    return
+  }
+
+  if (isShadcnPrimitive(normalized)) {
     return
   }
 

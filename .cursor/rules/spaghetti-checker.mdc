@@ -36,8 +36,13 @@ readability, reviewability, and testability.
 | `hooks/*.ts`       | Single custom hook                            |
 | `__tests__/`       | Vitest + Testing Library tests                |
 
-Shared UI → `src/common/components/`. Cross-module imports go through public
-module surfaces (`routes.ts`, barrel `index.ts`) — never another module's internals.
+Shared UI → `src/common/components/` (app compositions). Design-system primitives
+live in `src/components/ui/` (shadcn/ui). **Do not recreate** Button, Card, Input,
+Select, or Dropdown Menu — compose the shadcn files. Those files export several
+related parts on purpose and are exempt from “one component per file”.
+
+Cross-module imports go through public module surfaces (`routes.ts`, barrel
+`index.ts`) — never another module's internals.
 
 ---
 

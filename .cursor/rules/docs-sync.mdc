@@ -8,6 +8,7 @@ alwaysApply: true
 The `docs/` folder is the source of truth for the Jolly challenge frontend:
 
 - [docs/FRONTEND.mdc](mdc:docs/FRONTEND.mdc) — product scope, routes, module layout, and conventions.
+- [docs/DESIGN_DOC.md](mdc:docs/DESIGN_DOC.md) — requirements, architecture, and design-system law.
 
 ## When to apply
 
