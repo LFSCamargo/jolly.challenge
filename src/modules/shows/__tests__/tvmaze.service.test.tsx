@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { installTvmazeFetchMock } from '@/__tests__/mock-tvmaze-fetch'
 import { tvmazeMockData, tvmazeTestLabels } from '@test-fixtures/tvmaze.mock-data'
 import {
@@ -22,6 +22,14 @@ describe('tvmaze.service', () => {
   it('fetches additional browse pages for pagination', async () => {
     const page1 = await fetchShowsPage(1)
     expect(page1).toHaveLength(tvmazeMockData.browsePages[1].length)
+  })
+
+  it('treats a 404 beyond the final browse page as the end of the catalog', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: 'Not found' }), { status: 404 }),
+    )
+
+    await expect(fetchShowsPage(9999)).resolves.toEqual([])
   })
 
   it('normalizes search results to shows', async () => {

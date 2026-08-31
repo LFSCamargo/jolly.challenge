@@ -48,13 +48,45 @@ test.describe('Shows browse', () => {
   test('restores search and filter from query string params', async ({ page }) => {
     await page.goto(`/?q=${tvmazeTestLabels.searchQuery}&status=Ended`)
 
-    await expect(page.getByLabel('Search shows')).toHaveValue(tvmazeTestLabels.searchQuery)
-    await expect(page.getByRole('button', { name: 'Ended', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    await expect(page.getByLabel('Search shows')).toHaveValue(
+      tvmazeTestLabels.searchQuery,
     )
+    await expect(
+      page.getByRole('button', { name: 'Ended', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('heading', { name: 'Search Results' })).toBeVisible()
     await expect(page.getByText(tvmazeTestLabels.searchTopResultName)).toBeVisible()
+  })
+
+  test('keeps the scroll position when the next page is rate limited', async ({
+    page,
+  }) => {
+    await page.route('**/api.tvmaze.com/shows?page=1', async (route) => {
+      await route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Rate limited' }),
+      })
+    })
+
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', {
+        name: tvmazeTestLabels.featuredShowName,
+        level: 1,
+      }),
+    ).toBeVisible()
+
+    await page.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight)
+    })
+    const scrollBeforeError = await page.evaluate(() => window.scrollY)
+
+    await expect(page.getByText(/Could not load more shows/)).toBeVisible()
+
+    const scrollAfterError = await page.evaluate(() => window.scrollY)
+    expect(scrollAfterError).toBeGreaterThan(0)
+    expect(Math.abs(scrollAfterError - scrollBeforeError)).toBeLessThan(100)
   })
 })
 
@@ -62,7 +94,10 @@ test.describe('Show detail', () => {
   test('opens a show and renders grouped episodes', async ({ page }) => {
     await page.goto('/')
 
-    await page.locator(`a[href="/shows/${tvmazeTestLabels.featuredShowId}"]`).first().click()
+    await page
+      .locator(`a[href="/shows/${tvmazeTestLabels.featuredShowId}"]`)
+      .first()
+      .click()
 
     await expect(page).toHaveURL(`/shows/${tvmazeTestLabels.featuredShowId}`)
     await expect(

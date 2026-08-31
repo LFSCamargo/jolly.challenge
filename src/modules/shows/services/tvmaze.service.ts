@@ -18,6 +18,10 @@ class TvmazeRequestError extends Error {
   }
 }
 
+export function isTvmazeRateLimitError(error: unknown): boolean {
+  return error instanceof TvmazeRequestError && error.status === 429
+}
+
 function buildHeaders(): HeadersInit {
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -88,7 +92,16 @@ function parseEpisodes(json: unknown): Episode[] {
 }
 
 export function fetchShowsPage(page: number, signal?: AbortSignal): Promise<Show[]> {
-  return tvmazeFetch(`/shows?page=${page}`, signal, parseShowsPage)
+  return tvmazeFetch(`/shows?page=${page}`, signal, parseShowsPage).catch(
+    (error: unknown) => {
+      // TVMaze returns 404 (rather than []) when pagination passes the final page.
+      if (error instanceof TvmazeRequestError && error.status === 404) {
+        return []
+      }
+
+      throw error
+    },
+  )
 }
 
 export function searchShows(query: string, signal?: AbortSignal): Promise<Show[]> {

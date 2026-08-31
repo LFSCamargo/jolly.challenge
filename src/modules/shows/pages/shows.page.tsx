@@ -26,13 +26,14 @@ export function ShowsPage() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
   } = useShowsList()
 
   const sentinelRef = useInfiniteScroll(
     () => {
       void fetchNextPage()
     },
-    !isSearchActive,
+    !isSearchActive && !isFetchNextPageError,
     hasNextPage,
     isFetchingNextPage,
   )
@@ -104,6 +105,11 @@ export function ShowsPage() {
             rows={rows}
             sentinelRef={sentinelRef}
             isFetchingNextPage={isFetchingNextPage}
+            isFetchNextPageError={isFetchNextPageError}
+            hasNextPage={hasNextPage}
+            onRetryNextPage={() => {
+              void fetchNextPage()
+            }}
           />
         ) : null}
 

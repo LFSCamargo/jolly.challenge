@@ -6,7 +6,11 @@ import {
   parseShowsSearchParams,
   serializeShowsSearchParams,
 } from '../services/shows-query-params.service'
-import { fetchShowsPage, searchShows } from '../services/tvmaze.service'
+import {
+  fetchShowsPage,
+  isTvmazeRateLimitError,
+  searchShows,
+} from '../services/tvmaze.service'
 import type { StatusFilter } from '../types/show-status.type'
 import { useDebouncedValue } from './use-debounced-value'
 
@@ -16,7 +20,9 @@ export function useShowsList() {
   const lastSyncedSearchRef = useRef(searchParams.toString())
 
   const [searchQuery, setSearchQueryState] = useState(initialParams.searchQuery)
-  const [statusFilter, setStatusFilterState] = useState<StatusFilter>(initialParams.statusFilter)
+  const [statusFilter, setStatusFilterState] = useState<StatusFilter>(
+    initialParams.statusFilter,
+  )
   const debouncedQuery = useDebouncedValue(searchQuery.trim())
   const isSearchActive = debouncedQuery.length > 0
   const searchParamsString = searchParams.toString()
@@ -51,12 +57,14 @@ export function useShowsList() {
     getNextPageParam: (lastPage, _pages, lastPageParam) =>
       lastPage.length === 0 ? undefined : lastPageParam + 1,
     enabled: !isSearchActive,
+    retry: (failureCount, error) => !isTvmazeRateLimitError(error) && failureCount < 1,
   })
 
   const searchQueryResult = useQuery({
     queryKey: ['shows', 'search', debouncedQuery],
     queryFn: ({ signal }) => searchShows(debouncedQuery, signal),
     enabled: isSearchActive,
+    retry: (failureCount, error) => !isTvmazeRateLimitError(error) && failureCount < 1,
   })
 
   const sourceShows = useMemo(() => {
@@ -78,9 +86,12 @@ export function useShowsList() {
 
   const isUpdating = isSearchActive
     ? searchQueryResult.isFetching && Boolean(searchQueryResult.data)
-    : browseQuery.isFetchingNextPage
+    : false
 
-  const isError = isSearchActive ? searchQueryResult.isError : browseQuery.isError
+  const hasBrowseData = Boolean(browseQuery.data?.pages.length)
+  const isError = isSearchActive
+    ? searchQueryResult.isError
+    : browseQuery.isError && !hasBrowseData
 
   const error = isSearchActive ? searchQueryResult.error : browseQuery.error
 
@@ -88,6 +99,7 @@ export function useShowsList() {
 
   const hasNextPage = !isSearchActive && Boolean(browseQuery.hasNextPage)
   const isFetchingNextPage = browseQuery.isFetchingNextPage
+  const isFetchNextPageError = !isSearchActive && browseQuery.isFetchNextPageError
 
   return {
     shows,
@@ -104,6 +116,7 @@ export function useShowsList() {
     hasNextPage,
     fetchNextPage: browseQuery.fetchNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
     isEmpty: !isInitialLoading && !isError && shows.length === 0,
   }
 }

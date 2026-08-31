@@ -7,6 +7,11 @@ export function useInfiniteScroll(
   isLoading: boolean,
 ) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const onLoadMoreRef = useRef(onLoadMore)
+
+  useEffect(() => {
+    onLoadMoreRef.current = onLoadMore
+  }, [onLoadMore])
 
   useEffect(() => {
     if (!enabled || !hasMore || isLoading) {
@@ -18,11 +23,14 @@ export function useInfiniteScroll(
       return
     }
 
+    let requested = false
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
-        if (entry?.isIntersecting) {
-          onLoadMore()
+        if (entry?.isIntersecting && !requested) {
+          requested = true
+          observer.unobserve(sentinel)
+          onLoadMoreRef.current()
         }
       },
       { rootMargin: '240px 0px' },
@@ -33,7 +41,7 @@ export function useInfiniteScroll(
     return () => {
       observer.disconnect()
     }
-  }, [enabled, hasMore, isLoading, onLoadMore])
+  }, [enabled, hasMore, isLoading])
 
   return sentinelRef
 }

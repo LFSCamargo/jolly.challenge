@@ -129,6 +129,10 @@ These constrain _how_ we build FR-1–FR-10. They are also definition of done.
 - Infinite query keeps already-fetched pages; scrolling up does not refetch.
 - Search does not run until debounce settles (see §5.2).
 - No polling. No prefetch-on-hover of every card (that would burn the 20/10s budget).
+- TVMaze's terminal pagination `404` is normalized to an empty page (end of catalog).
+- A next-page failure never replaces loaded rows: the scroll position stays stable and
+  an inline retry appears at the sentinel. `429` responses wait for explicit retry
+  rather than adding automatic pressure to the rate limit.
 
 `QueryClientProvider` wraps the tree in `src/app/providers.tsx`. Query functions live in module `services/`, not in components.
 
