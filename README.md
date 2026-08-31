@@ -2,7 +2,7 @@
 
 Frontend-only React app for browsing TV shows via the [TVMaze API](https://www.tvmaze.com/api). No backend — all state and logic run in the browser.
 
-**Live repo:** https://github.com/LFSCamargo/jolly.challenge
+**Live repo:** [https://github.com/LFSCamargo/jolly.challenge](https://github.com/LFSCamargo/jolly.challenge)
 
 ---
 
@@ -17,6 +17,8 @@ npm run dev
 Open [http://localhost:5173](http://localhost:5173).
 
 > **Note:** TVMaze is a public API and does **not** require an API key. If `API_KEY` is set in `.env`, the app sends an `Authorization` header, which triggers a CORS preflight that TVMaze rejects with **405**. Leave it blank.
+
+
 
 ### Quality gates
 
@@ -33,14 +35,18 @@ npm run audit
 
 ---
 
+
+
 ## What I built
 
-| Route | Screen | Highlights |
-| ----- | ------ | ---------- |
-| `/` | Shows | Infinite browse, debounced search, status filter, cinematic hero, horizontal poster rows |
-| `/shows/:showId` | Show detail | Backdrop hero, summary, genres, episodes grouped by season |
-| `/favorites` | My List | Persisted favorites (localStorage), empty state, horizontal row |
-| `*` | Not found | 404 page |
+
+| Route            | Screen      | Highlights                                                                               |
+| ---------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| `/`              | Shows       | Infinite browse, debounced search, status filter, cinematic hero, horizontal poster rows |
+| `/shows/:showId` | Show detail | Backdrop hero, summary, genres, episodes grouped by season                               |
+| `/favorites`     | My List     | Persisted favorites (localStorage), empty state, horizontal row                          |
+| `*`              | Not found   | 404 page                                                                                 |
+
 
 **Stack:** React 19 · TypeScript · Vite · React Router · TanStack Query · Zustand · Zod · Tailwind CSS v4 · shadcn/ui (Nova / Base UI) · Vitest + Testing Library
 
@@ -49,9 +55,11 @@ Module conventions: [docs/FRONTEND.mdc](docs/FRONTEND.mdc)
 
 ---
 
+
+
 ## 1. Setup — existing boilerplate
 
-I started from my existing frontend boilerplate (adapted from a `password.manager`-style workflow) instead of a blank Vite template. That gave me:
+I started from my existing frontend boilerplate (adapted from a `password.manager`-repo that i had) instead of a blank Vite template. That gave me:
 
 - **React 19 + TypeScript + Vite** with path aliases (`@/`)
 - **Quality gates** wired from day one: ESLint, Prettier, TypeScript, Vitest, Husky pre-commit
@@ -62,11 +70,14 @@ Initial commit scaffolded the repo; the second commit added the design doc and s
 
 ---
 
+
+
 ## 2. System design doc — how I prompted
 
 > `/Users/lfscamargo/Downloads/Jolly Frontend Take-Home Assignment.pdf`
 >
 > On top of this document can you make a docs/DESIGN_DOC.md with all the architecture choices:
+>
 > - React Query for caching the data from the requests
 > - Debounced Search
 > - Race Conditions
@@ -77,6 +88,7 @@ Initial commit scaffolded the repo; the second commit added the design doc and s
 > Requirements and Non Functional requirements that we must conclude within this project
 >
 > Also set it up all the shadcn components that we are going to use such as:
+>
 > - Cards
 > - Inputs
 > - Buttons
@@ -94,6 +106,8 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 
 ---
 
+
+
 ## 3. Implementation + design — how I prompted
 
 > Implement the @docs/DESIGN_DOC.md contents into the application following strictly what is defined on the markdown file
@@ -109,11 +123,13 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 ### Implementation flow
 
 1. **Infrastructure** — `QueryClientProvider`, `env.ts`, Vite `envPrefix`, test helpers (`render-app.tsx`), removed starter `home` module
-2. **`shows` module** — Zod schemas, `tvmaze.service`, debounced search hook, infinite query browse, client-side status filter, hero + horizontal rows, loading/error/empty states
-3. **`show-detail` module** — cached show + episodes queries, episodes grouped by season, backdrop hero
-4. **`favorites` module** — Zustand store with `localStorage` persist, “My List” page
+2. `shows` **module** — Zod schemas, `tvmaze.service`, debounced search hook, infinite query browse, client-side status filter, hero + horizontal rows, loading/error/empty states
+3. `show-detail` **module** — cached show + episodes queries, episodes grouped by season, backdrop hero
+4. `favorites` **module** — Zustand store with `localStorage` persist, “My List” page
 5. **Routing** — `/`, `/shows/:showId`, `/favorites`, 404; shared header with favorites count
 6. **Tests** — services, hooks, store, pages, router (mocked `fetch`, no real network)
+
+
 
 ### Design decisions
 
@@ -125,27 +141,35 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 
 ---
 
+
+
 ## 4. Bugs and issues — how I fixed them
 
 > I'm facing issues of CORS on my application 405
 
-| Issue | Cause | Fix |
-| ----- | ----- | --- |
-| **CORS / 405 on TVMaze** | Optional `API_KEY` sent `Authorization: Bearer …`, triggering a CORS preflight TVMaze does not support | Leave `API_KEY` empty in `.env` (public API needs no auth) |
-| **shadcn + Tailwind mismatch** | Generated components expected Tailwind v4 | Upgraded to `@tailwindcss/vite`, removed legacy PostCSS config |
-| **NavLink + Button `render` broke a11y** | Custom render prop dropped accessible names / classes | Use `buttonVariants()` on `NavLink` / `Link` directly |
-| **Duplicate favorites in tests** | Missing `cleanup()` left prior renders subscribed to Zustand | Global `afterEach(cleanup)` + reset favorites store in test setup |
-| **`localStorage` / persist in Vitest** | Node 22 partial `localStorage`; Zustand captured storage before polyfill | Split `setup-storage.ts` (runs first) with in-memory storage |
-| **`AbortSignal` errors in tests** | jsdom vs Node fetch realm mismatch | Polyfill `fetch`/`Request`/`Response` via `undici` in test setup |
-| **Router test flakiness** | “Shows” `<h1>` hidden when cinematic hero is visible | Assert stable UI: `Search shows` input + “Your Next Watch” heading |
-| **`IntersectionObserver` undefined** | Infinite scroll sentinel in jsdom | Mock in `src/__tests__/setup.ts` |
-| **Spaghetti checker failures** | Multiple exports per file; `.test.ts` in modules | Split `ShowsLoadMore` into its own file; rename module tests to `.test.tsx` |
-| **Knip dead-code noise** | Unused barrel exports, orphaned `routes.ts` | Trim public module surfaces; delete unused files/exports |
-| **Commit / remote setup** | No remote on first push; commitlint line length | Created GitHub repo; wrapped commit messages |
+
+| Issue                                        | Cause                                                                                                  | Fix                                                                         |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| **CORS / 405 on TVMaze**                     | Optional `API_KEY` sent `Authorization: Bearer …`, triggering a CORS preflight TVMaze does not support | Leave `API_KEY` empty in `.env` (public API needs no auth)                  |
+| **shadcn + Tailwind mismatch**               | Generated components expected Tailwind v4                                                              | Upgraded to `@tailwindcss/vite`, removed legacy PostCSS config              |
+| **NavLink + Button** `render` **broke a11y** | Custom render prop dropped accessible names / classes                                                  | Use `buttonVariants()` on `NavLink` / `Link` directly                       |
+| **Duplicate favorites in tests**             | Missing `cleanup()` left prior renders subscribed to Zustand                                           | Global `afterEach(cleanup)` + reset favorites store in test setup           |
+| `localStorage` **/ persist in Vitest**       | Node 22 partial `localStorage`; Zustand captured storage before polyfill                               | Split `setup-storage.ts` (runs first) with in-memory storage                |
+| `AbortSignal` **errors in tests**            | jsdom vs Node fetch realm mismatch                                                                     | Polyfill `fetch`/`Request`/`Response` via `undici` in test setup            |
+| **Router test flakiness**                    | “Shows” `<h1>` hidden when cinematic hero is visible                                                   | Assert stable UI: `Search shows` input + “Your Next Watch” heading          |
+| `IntersectionObserver` **undefined**         | Infinite scroll sentinel in jsdom                                                                      | Mock in `src/__tests__/setup.ts`                                            |
+| **Spaghetti checker failures**               | Multiple exports per file; `.test.ts` in modules                                                       | Split `ShowsLoadMore` into its own file; rename module tests to `.test.tsx` |
+| **Knip dead-code noise**                     | Unused barrel exports, orphaned `routes.ts`                                                            | Trim public module surfaces; delete unused files/exports                    |
+| **Commit / remote setup**                    | No remote on first push; commitlint line length                                                        | Created GitHub repo; wrapped commit messages                                |
+
 
 ---
 
+
+
 ## 5. Finished project — how I achieved it
+
+
 
 ### Requirements checklist
 
@@ -162,16 +186,22 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 - [x] Tests with mocked network (20 tests, all passing)
 - [x] All quality gates green (lint, typecheck, spaghetti, security, knip, build, audit)
 
+
+
 ### Key technical choices
 
-| Area | Choice | Why |
-| ---- | ------ | --- |
-| Server state | TanStack Query | Cache browse pages, dedupe detail/episodes, cancel in-flight search |
-| Search | 300ms debounce + dedicated query key | Stays under TVMaze rate limit; avoids request spam |
-| Races | `AbortSignal` on fetch | Superseded search responses are discarded |
-| Favorites | Zustand `persist` | Simple sync API; snapshot avoids N+1 fetches on My List |
-| API boundary | Zod schemas | Invalid TVMaze payloads fail closed, no `any` in UI |
-| UI | shadcn composition only | One design system; checker enforces no primitive rewrites |
+
+| Area         | Choice                               | Why                                                                 |
+| ------------ | ------------------------------------ | ------------------------------------------------------------------- |
+| Server state | TanStack Query                       | Cache browse pages, dedupe detail/episodes, cancel in-flight search |
+| Search       | 300ms debounce + dedicated query key | Stays under TVMaze rate limit; avoids request spam                  |
+| Races        | `AbortSignal` on fetch               | Superseded search responses are discarded                           |
+| Favorites    | Zustand `persist`                    | Simple sync API; snapshot avoids N+1 fetches on My List             |
+| API boundary | Zod schemas                          | Invalid TVMaze payloads fail closed, no `any` in UI                 |
+| UI           | shadcn composition only              | One design system; checker enforces no primitive rewrites           |
+
+
+
 
 ### What I left out (by design)
 
@@ -185,6 +215,8 @@ With more time: code-splitting to shrink the main bundle, richer episode UX, and
 
 ---
 
+
+
 ## AI usage disclosure
 
 This project was built with **Cursor** as an AI-assisted pair programmer. Typical workflow:
@@ -196,6 +228,8 @@ This project was built with **Cursor** as an AI-assisted pair programmer. Typica
 Human decisions retained: product calls in the design doc (web over RN, client-side filter, Netflix visual direction), module boundaries, and what ships vs. out-of-scope.
 
 ---
+
+
 
 ## Project structure (summary)
 
@@ -214,6 +248,8 @@ src/
 See [docs/FRONTEND.mdc](docs/FRONTEND.mdc) for the full tree.
 
 ---
+
+
 
 ## Cursor tooling
 
