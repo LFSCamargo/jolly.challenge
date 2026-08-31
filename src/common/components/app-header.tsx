@@ -40,14 +40,14 @@ export function AppHeader() {
             aria-label="Primary"
             className="hidden md:col-start-2 md:row-start-1 md:flex md:items-center md:justify-center md:gap-1"
           >
-            <NavLink
+            <Link
               to={{ pathname: '/', hash: 'search' }}
-              className={() => navLinkClass(onSearch)}
-              aria-current={onSearch ? 'page' : false}
+              className={navLinkClass(onSearch)}
+              aria-current={onSearch ? 'page' : undefined}
             >
               <SearchIcon data-icon="inline-start" />
               Search
-            </NavLink>
+            </Link>
             <NavLink
               to="/"
               end
