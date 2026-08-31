@@ -1,29 +1,14 @@
 import { screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { installTvmazeFetchMock, tvmazeTestLabels } from '@/__tests__/mock-tvmaze-fetch'
 import { renderApp } from '@/__tests__/render-app'
 import { useFavoritesStore } from '@/modules/favorites'
-import { mockEndedShow, mockShow } from '@/modules/shows/__tests__/fixtures/shows.fixture'
 
 describe('app router', () => {
   beforeEach(() => {
     useFavoritesStore.persist.clearStorage()
     useFavoritesStore.setState({ favorites: [] })
-    vi.restoreAllMocks()
-    vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
-      const url = String(input)
-
-      if (url.endsWith('/episodes')) {
-        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }))
-      }
-
-      if (url.includes('/shows/')) {
-        return Promise.resolve(new Response(JSON.stringify(mockShow), { status: 200 }))
-      }
-
-      return Promise.resolve(
-        new Response(JSON.stringify([mockShow, mockEndedShow]), { status: 200 }),
-      )
-    })
+    installTvmazeFetchMock()
   })
 
   it('renders the shows list at /', async () => {
@@ -40,8 +25,10 @@ describe('app router', () => {
   })
 
   it('renders show detail at /shows/:showId', async () => {
-    renderApp({ path: '/shows/1' })
-    expect(await screen.findByRole('heading', { name: 'Mock Show' })).toBeInTheDocument()
+    renderApp({ path: `/shows/${tvmazeTestLabels.detailShowId}` })
+    expect(
+      await screen.findByRole('heading', { name: tvmazeTestLabels.detailShowName }),
+    ).toBeInTheDocument()
   })
 
   it('renders not found for unknown paths', () => {

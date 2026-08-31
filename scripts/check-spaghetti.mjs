@@ -150,8 +150,17 @@ const checkUiComponents = () => {
   }
 }
 
+const SPAGHETTI_IGNORE_PREFIXES = ['test-fixtures/']
+
+const isSpaghettiIgnored = (filePath) =>
+  SPAGHETTI_IGNORE_PREFIXES.some((prefix) => rel(filePath).startsWith(prefix))
+
 const checkFile = (filePath) => {
   const normalized = filePath.startsWith('/') ? filePath : join(ROOT, filePath)
+
+  if (isSpaghettiIgnored(normalized)) {
+    return
+  }
 
   if (normalized.includes('/src/modules/')) {
     const moduleDir = normalized.split('/modules/')[1]?.split('/')[0]

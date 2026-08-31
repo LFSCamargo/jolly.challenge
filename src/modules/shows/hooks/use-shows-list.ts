@@ -1,15 +1,48 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { filterShowsByStatus } from '../services/filter-shows.service'
+import {
+  parseShowsSearchParams,
+  serializeShowsSearchParams,
+} from '../services/shows-query-params.service'
 import { fetchShowsPage, searchShows } from '../services/tvmaze.service'
 import type { StatusFilter } from '../types/show-status.type'
 import { useDebouncedValue } from './use-debounced-value'
 
 export function useShowsList() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialParams = parseShowsSearchParams(searchParams)
+  const lastSyncedSearchRef = useRef(searchParams.toString())
+
+  const [searchQuery, setSearchQueryState] = useState(initialParams.searchQuery)
+  const [statusFilter, setStatusFilterState] = useState<StatusFilter>(initialParams.statusFilter)
   const debouncedQuery = useDebouncedValue(searchQuery.trim())
   const isSearchActive = debouncedQuery.length > 0
+  const searchParamsString = searchParams.toString()
+
+  useEffect(() => {
+    const nextParams = serializeShowsSearchParams(searchQuery, statusFilter)
+    const nextParamsString = nextParams.toString()
+
+    if (searchParamsString === nextParamsString) {
+      return
+    }
+
+    lastSyncedSearchRef.current = nextParamsString
+    setSearchParams(nextParams, { replace: true })
+  }, [searchParamsString, searchQuery, setSearchParams, statusFilter])
+
+  useEffect(() => {
+    if (searchParamsString === lastSyncedSearchRef.current) {
+      return
+    }
+
+    lastSyncedSearchRef.current = searchParamsString
+    const parsedParams = parseShowsSearchParams(searchParams)
+    setSearchQueryState(parsedParams.searchQuery)
+    setStatusFilterState(parsedParams.statusFilter)
+  }, [searchParams, searchParamsString])
 
   const browseQuery = useInfiniteQuery({
     queryKey: ['shows', 'list'],
@@ -59,9 +92,9 @@ export function useShowsList() {
   return {
     shows,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: setSearchQueryState,
     statusFilter,
-    setStatusFilter,
+    setStatusFilter: setStatusFilterState,
     isSearchActive,
     isInitialLoading,
     isUpdating,

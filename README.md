@@ -28,7 +28,8 @@ npm run check:security
 npm run knip
 npm run lint
 npm run typecheck
-npm run test
+npm run test          # Vitest (unit/integration)
+npm run test:e2e      # Playwright (E2E, desktop + mobile)
 npm run build
 npm run audit
 ```

@@ -4,9 +4,12 @@
     "src/main.tsx",
     "src/routes/index.tsx",
     "src/**/__tests__/**/*.{ts,tsx}",
-    "scripts/*.{mjs,sh}"
+    "scripts/*.{mjs,sh}",
+    "playwright.config.ts",
+    "e2e/**/*.ts",
+    "test-fixtures/**/*.ts"
   ],
-  "project": ["src/**/*.{ts,tsx}", "scripts/*.{mjs,sh}"],
+  "project": ["src/**/*.{ts,tsx}", "scripts/*.{mjs,sh}", "test-fixtures/**/*.ts", "e2e/**/*.ts"],
   "ignore": ["dist/**"],
   "ignoreDependencies": [
     "@fontsource-variable/geist",

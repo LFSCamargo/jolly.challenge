@@ -8,7 +8,11 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       environmentOptions: { jsdom: { url: 'http://localhost' } },
-      include: ['src/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.tsx'],
+      include: [
+        'src/**/__tests__/**/*.test.ts',
+        'src/**/__tests__/**/*.test.tsx',
+        'test-fixtures/**/*.test.ts',
+      ],
       setupFiles: ['src/__tests__/setup-storage.ts', 'src/__tests__/setup.ts'],
     },
   }),

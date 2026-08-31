@@ -144,6 +144,10 @@ These constrain _how_ we build FR-1–FR-10. They are also definition of done.
 - While debounce is pending, keep showing the previous result set (or a lightweight “updating” indicator), not a blank page.
 - Status filter applies to whatever list is on screen (browse pages or search hits).
 - Implementation: a small `useDebouncedValue` hook in the shows module (one hook per file).
+- **URL sync:** search and status filter are mirrored in the query string on `/` so views are shareable and survive reload/back/forward:
+  - `q` — search text (omitted when empty)
+  - `status` — `Running`, `Ended`, or `To Be Determined` (omitted when `all`)
+  - Example: `/?q=mock&status=Ended`
 
 ### 5.3 Race conditions
 
@@ -302,6 +306,7 @@ Network adapter: `fetch` with `AbortSignal`, `Accept: application/json`. Zod par
 - **Red → green → refactor** for every FR.
 - Tests in `__tests__/`, never beside source.
 - Mock `fetch` / QueryClient; never hit TVMaze in unit tests.
+- **E2E:** Playwright in `e2e/` uses `test-fixtures/tvmaze.mock-data.ts` (real TVMaze snapshots in one file; mocked in test/e2e only, never in dev).
 - Cover: list pagination, debounce (fake timers), abort/race (out-of-order responses), status filter, favorites persist (mocked `localStorage`), episode grouping, error/empty/loading UI.
 - shadcn primitives are covered by a smoke render test so the design-system files stay in the graph; product tests assert user-visible behavior on composed feature components.
 

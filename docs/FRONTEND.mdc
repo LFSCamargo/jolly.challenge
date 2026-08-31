@@ -18,11 +18,15 @@ system): [docs/DESIGN_DOC.md](DESIGN_DOC.md).
 | Server state | TanStack Query (React Query) |
 | Client state | Zustand (favorites persist) |
 | Validation | Zod |
-| Tests | Vitest + Testing Library |
+| Tests | Vitest + Testing Library; Playwright (E2E in `e2e/`) |
 
 ## Folder structure
 
 ```
+test-fixtures/              # TVMaze mock data (test/e2e only)
+  tvmaze.mock-data.ts       # Real API snapshot bundle (spaghetti-exempt)
+  tvmaze-mock-handler.ts    # Routes mocked fetch / Playwright responses
+e2e/                        # Playwright E2E tests
 src/
   app/                   # App shell (providers)
   common/
@@ -88,6 +92,7 @@ file by design). It is exempt from the one-component-per-file rule.
 | `npm run dev` | Start Vite dev server (port 5173) |
 | `npm run build` | Typecheck + production build |
 | `npm run test` | Run Vitest unit tests |
+| `npm run test:e2e` | Run Playwright end-to-end tests |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript |
 | `npm run check:spaghetti` | Module layout checker |
@@ -108,11 +113,11 @@ mobile per `.cursor/rules/design-ux.mdc` before implementing.
 
 ## Routes
 
-| Path | Page | Module |
-| ---- | ---- | ------ |
-| `/` | Shows | `shows` |
-| `/shows/:showId` | Show detail | `show-detail` |
-| `/favorites` | My List | `favorites` |
-| `*` | Not found | `common` |
+| Path | Page | Module | Query params |
+| ---- | ---- | ------ | ------------ |
+| `/` | Shows | `shows` | `q` (search), `status` (Running / Ended / To Be Determined) |
+| `/shows/:showId` | Show detail | `show-detail` | — |
+| `/favorites` | My List | `favorites` | — |
+| `*` | Not found | `common` | — |
 
 Add new routes in `src/routes/index.tsx` and create matching modules under `src/modules/`.
