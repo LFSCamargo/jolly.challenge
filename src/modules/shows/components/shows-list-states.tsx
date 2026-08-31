@@ -45,7 +45,7 @@ export function ShowsListStates({
           <div className="-mx-4 flex scrollbar-none gap-2 overflow-x-hidden px-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="w-28 shrink-0 sm:w-32 md:w-36">
-                <Skeleton className="aspect-[2/3] w-full rounded-md" />
+                <Skeleton className="aspect-2/3 w-full rounded-md" />
               </div>
             ))}
           </div>

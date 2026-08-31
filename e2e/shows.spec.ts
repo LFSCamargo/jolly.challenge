@@ -18,17 +18,37 @@ test.describe('Shows browse', () => {
   })
 
   test('searches shows and syncs the query string', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/')
 
     await expect(
       page.getByRole('heading', { name: tvmazeTestLabels.featuredShowName, level: 1 }),
     ).toBeVisible()
+    await expect(page.getByLabel('Search shows')).toHaveCount(0)
 
-    await page.getByLabel('Search shows').fill(tvmazeTestLabels.searchQuery)
+    await page.getByRole('button', { name: 'Open search' }).click()
+    await page
+      .getByLabel('Search titles, genres, and keywords')
+      .fill(tvmazeTestLabels.searchQuery)
 
-    await expect(page).toHaveURL(`/?q=${tvmazeTestLabels.searchQuery}`)
+    await expect(page).toHaveURL(`/search?q=${tvmazeTestLabels.searchQuery}`)
     await expect(page.getByRole('heading', { name: 'Search Results' })).toBeVisible()
     await expect(page.getByText(tvmazeTestLabels.searchTopResultName)).toBeVisible()
+  })
+
+  test('opens the dedicated search page on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/')
+
+    await page.getByRole('link', { name: 'Search' }).click()
+    await expect(page).toHaveURL('/search')
+
+    const searchInput = page.getByLabel('Search shows')
+    await expect(searchInput).toBeFocused()
+    await searchInput.fill(tvmazeTestLabels.searchQuery)
+
+    await expect(page).toHaveURL(`/search?q=${tvmazeTestLabels.searchQuery}`)
+    await expect(page.getByRole('heading', { name: 'Search Results' })).toBeVisible()
   })
 
   test('filters by status and syncs the query string', async ({ page }) => {
@@ -47,7 +67,7 @@ test.describe('Shows browse', () => {
   })
 
   test('restores search and filter from query string params', async ({ page }) => {
-    await page.goto(`/?q=${tvmazeTestLabels.searchQuery}&status=Ended`)
+    await page.goto(`/search?q=${tvmazeTestLabels.searchQuery}&status=Ended`)
 
     await expect(page.getByLabel('Search shows')).toHaveValue(
       tvmazeTestLabels.searchQuery,

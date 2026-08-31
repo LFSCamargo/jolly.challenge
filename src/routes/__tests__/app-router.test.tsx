@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { installTvmazeFetchMock, tvmazeTestLabels } from '@/__tests__/mock-tvmaze-fetch'
 import { renderApp } from '@/__tests__/render-app'
@@ -13,12 +13,88 @@ describe('app router', () => {
 
   it('renders the shows list at /', async () => {
     renderApp({ path: '/' })
-    expect(await screen.findByLabelText('Search shows')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Search shows')).not.toBeInTheDocument()
     expect(
       await screen.findByRole('heading', { name: 'Your Next Watch' }),
     ).toBeInTheDocument()
   })
 
+  it('renders the dedicated search page at /search', () => {
+    renderApp({ path: '/search' })
+    expect(screen.getByRole('heading', { name: 'Search shows' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Search shows')).toBeInTheDocument()
+  })
+
+  it('expands desktop search from the header and opens search results', async () => {
+    const { router } = renderApp({ path: '/' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open search' }))
+
+    const headerSearch = screen.getByLabelText('Search titles, genres, and keywords')
+    expect(headerSearch).toHaveFocus()
+
+    fireEvent.change(headerSearch, {
+      target: { value: 'b' },
+    })
+
+    await waitFor(() => {
+      expect(headerSearch).toHaveValue('b')
+      expect(router.state.location.pathname).toBe('/search')
+      expect(router.state.location.search).toBe('?q=b')
+    })
+
+    fireEvent.change(headerSearch, {
+      target: { value: 'br' },
+    })
+
+    await waitFor(() => {
+      expect(headerSearch).toHaveValue('br')
+      expect(router.state.location.search).toBe('?q=br')
+    })
+
+    fireEvent.change(headerSearch, {
+      target: { value: tvmazeTestLabels.searchQuery },
+    })
+
+    await waitFor(() => {
+      expect(headerSearch).toHaveValue(tvmazeTestLabels.searchQuery)
+      expect(router.state.location.pathname).toBe('/search')
+      expect(router.state.location.search).toBe(`?q=${tvmazeTestLabels.searchQuery}`)
+    })
+  })
+
+  it('stays on search when desktop query is cleared', async () => {
+    const { router } = renderApp({ path: `/search?q=${tvmazeTestLabels.searchQuery}` })
+
+    const headerSearch = screen.getByLabelText('Search titles, genres, and keywords')
+
+    fireEvent.change(headerSearch, {
+      target: { value: '' },
+    })
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/search')
+      expect(router.state.location.search).toBe('')
+    })
+
+    expect(headerSearch).toHaveValue('')
+    expect(screen.getByRole('heading', { name: 'Search shows' })).toBeInTheDocument()
+  })
+
+  it('returns home when desktop search is closed from the search page', async () => {
+    const { router } = renderApp({ path: `/search?q=${tvmazeTestLabels.searchQuery}` })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close search' }))
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/')
+      expect(router.state.location.search).toBe('')
+    })
+
+    expect(
+      await screen.findByRole('heading', { name: 'Your Next Watch' }),
+    ).toBeInTheDocument()
+  })
   it('renders favorites at /favorites', () => {
     renderApp({ path: '/favorites' })
     expect(screen.getByRole('heading', { name: 'My List' })).toBeInTheDocument()
@@ -39,7 +115,9 @@ describe('app router', () => {
   it('navigates between shows and favorites from the header', async () => {
     const { router } = renderApp({ path: '/' })
 
-    expect(await screen.findByLabelText('Search shows')).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Your Next Watch' }),
+    ).toBeInTheDocument()
     const myListLinks = screen.getAllByRole('link', { name: /^my list$/i })
     expect(myListLinks.length).toBeGreaterThan(0)
     for (const link of myListLinks) {
@@ -52,7 +130,7 @@ describe('app router', () => {
 
     await router.navigate('/')
 
-    expect(await screen.findByLabelText('Search shows')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Search shows')).not.toBeInTheDocument()
     expect(
       await screen.findByRole('heading', { name: 'Your Next Watch' }),
     ).toBeInTheDocument()

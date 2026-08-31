@@ -30,16 +30,11 @@ describe('ShowsPage', () => {
     expect(screen.queryByRole('heading', { name: 'Drama' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Comedy' })).not.toBeInTheDocument()
     expect(screen.getAllByText(tvmazeTestLabels.endedShowName).length).toBeGreaterThan(0)
+    expect(screen.queryByLabelText('Search shows')).not.toBeInTheDocument()
   })
 
   it('searches by name after typing', async () => {
-    renderApp({ path: '/' })
-
-    expect(
-      await screen.findByRole('heading', {
-        name: tvmazeTestLabels.featuredShowName,
-      }),
-    ).toBeInTheDocument()
+    renderApp({ path: '/search' })
 
     fireEvent.change(screen.getByLabelText('Search shows'), {
       target: { value: tvmazeTestLabels.searchQuery },
@@ -217,7 +212,7 @@ describe('ShowsPage', () => {
 
   it('initializes search and filter from query string params', async () => {
     renderApp({
-      path: `/?q=${tvmazeTestLabels.searchQuery}&status=Running`,
+      path: `/search?q=${tvmazeTestLabels.searchQuery}&status=Running`,
     })
 
     expect(screen.getByLabelText('Search shows')).toHaveValue(
@@ -253,19 +248,14 @@ describe('ShowsPage', () => {
   })
 
   it('updates query string params when searching', async () => {
-    const { router } = renderApp({ path: '/' })
-
-    expect(
-      await screen.findByRole('heading', {
-        name: tvmazeTestLabels.featuredShowName,
-      }),
-    ).toBeInTheDocument()
+    const { router } = renderApp({ path: '/search' })
 
     fireEvent.change(screen.getByLabelText('Search shows'), {
       target: { value: tvmazeTestLabels.searchQuery },
     })
 
     await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/search')
       expect(router.state.location.search).toBe(`?q=${tvmazeTestLabels.searchQuery}`)
     })
   })

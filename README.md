@@ -24,8 +24,6 @@ Open [http://localhost:5173](http://localhost:5173).
 
 > **Note:** TVMaze is a public API and does **not** require an API key. If `API_KEY` is set in `.env`, the app sends an `Authorization` header, which triggers a CORS preflight that TVMaze rejects with **405**. Leave it blank.
 
-
-
 ### Quality gates
 
 ```bash
@@ -42,18 +40,15 @@ npm run audit             # or: pnpm audit
 
 ---
 
-
-
 ## What I built
 
-
-| Route            | Screen      | Highlights                                                                               |
-| ---------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| `/`              | Shows       | Infinite browse, debounced search, status filter, cinematic hero, next-watch rail + growing grid |
-| `/shows/:showId` | Show detail | Backdrop hero, summary, genres, episodes grouped by season                               |
-| `/favorites`     | My List     | Persisted favorites (localStorage), empty state, horizontal row                          |
-| `*`              | Not found   | 404 page                                                                                 |
-
+| Route            | Screen      | Highlights                                                                                           |
+| ---------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `/`              | Shows       | Infinite browse, status filter, compact featured card, portrait-cover next-watch rail + growing grid |
+| `/search`        | Search      | Mobile search page, desktop expandable header search, debounced results and status filter            |
+| `/shows/:showId` | Show detail | Backdrop hero, summary, genres, episodes grouped by season                                           |
+| `/favorites`     | My List     | Persisted favorites (localStorage), empty state, horizontal row                                      |
+| `*`              | Not found   | 404 page                                                                                             |
 
 **Stack:** React 19 · TypeScript · Vite · React Router · TanStack Query · Zustand · Zod · Tailwind CSS v4 · shadcn/ui (Nova / Base UI) · Vitest + Testing Library
 
@@ -61,8 +56,6 @@ Architecture and requirements: [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md)
 Module conventions: [docs/FRONTEND.mdc](docs/FRONTEND.mdc)
 
 ---
-
-
 
 ## 1. Setup — existing boilerplate
 
@@ -76,8 +69,6 @@ I started from my existing frontend boilerplate (adapted from a `password.manage
 Initial commit scaffolded the repo; the second commit added the design doc and shadcn primitives on Tailwind v4.
 
 ---
-
-
 
 ## 2. System design doc — how I prompted
 
@@ -113,8 +104,6 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 
 ---
 
-
-
 ## 3. Implementation + design — how I prompted
 
 > Implement the @docs/DESIGN_DOC.md contents into the application following strictly what is defined on the markdown file
@@ -125,7 +114,7 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 
 > I want you to use the Netflix styleguide for all the stuff that we are building, ❤️
 
-*(Netflix prompt included a reference screenshot of the TV UI.)*
+_(Netflix prompt included a reference screenshot of the TV UI.)_
 
 ### Implementation flow
 
@@ -136,24 +125,19 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 5. **Routing** — `/`, `/shows/:showId`, `/favorites`, 404; shared header with favorites count
 6. **Tests** — services, hooks, store, pages, router (mocked `fetch`, no real network)
 
-
-
 ### Design decisions
 
-- **Netflix-inspired UI** on top of shadcn — black canvas, red accent (`#E50914`), pill nav/CTAs, cinematic hero gradients, poster-first cards, a Your Next Watch rail, and an infinite All Shows grid
+- **Netflix-inspired UI** on top of shadcn — black canvas, red accent (`#E50914`), pill nav/CTAs, compact cinematic featured card, portrait covers, a Your Next Watch rail, and an infinite All Shows grid
 - **shadcn additions via MCP/CLI:** `badge`, `skeleton`, `separator`, `empty`, `spinner`, `toggle-group`
-- **Mobile + desktop** — stacked search/filter on small screens; same tasks on both viewports; touch-friendly heart buttons (no hover-only actions)
+- **Mobile + desktop** — dedicated mobile search page and expandable desktop header search; same tasks on both viewports; touch-friendly heart buttons (no hover-only actions)
 - **Client-side status filter** — TVMaze has no status query param; filter accumulated browse pages and search results locally
 - **Favorites snapshot** — store `id`, `name`, `status`, `imageMedium` so My List renders without re-fetching every show
 
 ---
 
-
-
 ## 4. Bugs and issues — how I fixed them
 
 > I'm facing issues of CORS on my application 405
-
 
 | Issue                                        | Cause                                                                                                  | Fix                                                                         |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -169,14 +153,9 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 | **Knip dead-code noise**                     | Unused barrel exports, orphaned `routes.ts`                                                            | Trim public module surfaces; delete unused files/exports                    |
 | **Commit / remote setup**                    | No remote on first push; commitlint line length                                                        | Created GitHub repo; wrapped commit messages                                |
 
-
 ---
 
-
-
 ## 5. Finished project — how I achieved it
-
-
 
 ### Requirements checklist
 
@@ -193,10 +172,7 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 - [x] Tests with mocked network (20 tests, all passing)
 - [x] All quality gates green (lint, typecheck, spaghetti, security, knip, build, audit)
 
-
-
 ### Key technical choices
-
 
 | Area         | Choice                               | Why                                                                 |
 | ------------ | ------------------------------------ | ------------------------------------------------------------------- |
@@ -206,9 +182,6 @@ That produced [docs/DESIGN_DOC.md](docs/DESIGN_DOC.md), shadcn primitives on Tai
 | Favorites    | Zustand `persist`                    | Simple sync API; snapshot avoids N+1 fetches on My List             |
 | API boundary | Zod schemas                          | Invalid TVMaze payloads fail closed, no `any` in UI                 |
 | UI           | shadcn composition only              | One design system; checker enforces no primitive rewrites           |
-
-
-
 
 ### What I left out (by design)
 
@@ -222,8 +195,6 @@ With more time: code-splitting to shrink the main bundle, richer episode UX, and
 
 ---
 
-
-
 ## AI usage disclosure
 
 This project was built with **Cursor** as an AI-assisted pair programmer. Typical workflow:
@@ -235,8 +206,6 @@ This project was built with **Cursor** as an AI-assisted pair programmer. Typica
 Human decisions retained: product calls in the design doc (web over RN, client-side filter, Netflix visual direction), module boundaries, and what ships vs. out-of-scope.
 
 ---
-
-
 
 ## Project structure (summary)
 
@@ -255,8 +224,6 @@ src/
 See [docs/FRONTEND.mdc](docs/FRONTEND.mdc) for the full tree.
 
 ---
-
-
 
 ## Cursor tooling
 

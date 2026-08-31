@@ -26,7 +26,7 @@ export function ShowCard({ show, className }: ShowCardProps) {
           to={`/shows/${show.id}`}
           className="ring-offset-background focus-visible:ring-foreground block overflow-hidden rounded-md focus-visible:ring-2 focus-visible:outline-none"
         >
-          <div className="bg-muted aspect-[2/3] w-full overflow-hidden">
+          <div className="bg-muted aspect-2/3 w-full overflow-hidden">
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -40,7 +40,7 @@ export function ShowCard({ show, className }: ShowCardProps) {
               </div>
             )}
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pt-8 pb-2">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-linear-to-t from-black via-black/70 to-transparent px-2 pt-8 pb-2">
             <p className="truncate text-sm font-medium">{show.name}</p>
             <ShowStatusBadge status={show.status} />
           </div>

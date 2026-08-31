@@ -60,11 +60,11 @@ export function ShowsPage() {
 
   return (
     <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 [overflow-anchor:none] md:pb-8">
-      {featuredShow ? <ShowsHero show={featuredShow} /> : null}
+      <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 pt-20 pb-6 sm:px-8 lg:px-12">
+        {featuredShow ? <ShowsHero show={featuredShow} /> : null}
 
-      <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 py-6 sm:px-8 lg:px-12">
         {!featuredShow ? (
-          <div className="flex flex-col gap-2 pt-16">
+          <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
               {isSearchActive ? 'Search' : 'Shows'}
             </h1>
@@ -77,6 +77,7 @@ export function ShowsPage() {
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           isUpdating={isUpdating}
+          showSearch={false}
         />
 
         <ShowsListStates

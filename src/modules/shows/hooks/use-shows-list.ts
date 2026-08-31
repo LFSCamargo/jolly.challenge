@@ -1,7 +1,10 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { filterShowsByStatus } from '../services/filter-shows.service'
+import {
+  filterShowsByStatus,
+  showMatchesSearchQuery,
+} from '../services/filter-shows.service'
 import {
   parseShowsSearchParams,
   serializeShowsSearchParams,
@@ -18,10 +21,15 @@ const isTestEnv = import.meta.env.MODE === 'test'
 const RATE_LIMIT_RETRY_DELAY_MS = isTestEnv ? 1 : 2_500
 const RATE_LIMIT_MAX_RETRIES = isTestEnv ? 3 : 20
 
-export function useShowsList() {
+type UseShowsListOptions = {
+  browseEnabled?: boolean
+}
+
+export function useShowsList({ browseEnabled = true }: UseShowsListOptions = {}) {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialParams = parseShowsSearchParams(searchParams)
   const lastSyncedSearchRef = useRef(searchParams.toString())
+  const pendingLocalSyncRef = useRef(false)
 
   const [searchQuery, setSearchQueryState] = useState(initialParams.searchQuery)
   const [statusFilter, setStatusFilterState] = useState<StatusFilter>(
@@ -36,15 +44,15 @@ export function useShowsList() {
     const nextParamsString = nextParams.toString()
 
     if (searchParamsString === nextParamsString) {
+      lastSyncedSearchRef.current = nextParamsString
+      pendingLocalSyncRef.current = false
       return
     }
 
-    lastSyncedSearchRef.current = nextParamsString
-    setSearchParams(nextParams, { replace: true })
-  }, [searchParamsString, searchQuery, setSearchParams, statusFilter])
-
-  useEffect(() => {
-    if (searchParamsString === lastSyncedSearchRef.current) {
+    if (pendingLocalSyncRef.current) {
+      lastSyncedSearchRef.current = nextParamsString
+      setSearchParams(nextParams, { replace: true })
+      pendingLocalSyncRef.current = false
       return
     }
 
@@ -52,7 +60,7 @@ export function useShowsList() {
     const parsedParams = parseShowsSearchParams(searchParams)
     setSearchQueryState(parsedParams.searchQuery)
     setStatusFilterState(parsedParams.statusFilter)
-  }, [searchParams, searchParamsString])
+  }, [searchParams, searchParamsString, searchQuery, setSearchParams, statusFilter])
 
   const browseQuery = useInfiniteQuery({
     queryKey: ['shows', 'list'],
@@ -65,7 +73,7 @@ export function useShowsList() {
 
       return lastPageParam + 1
     },
-    enabled: !isSearchActive,
+    enabled: browseEnabled || isSearchActive,
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: (failureCount, error) =>
@@ -94,25 +102,37 @@ export function useShowsList() {
         : 500,
   })
 
-  const sourceShows = useMemo(() => {
-    if (isSearchActive) {
-      return searchQueryResult.data ?? []
-    }
+  const mergedSearchShows = useMemo(() => {
+    const ranked = searchQueryResult.data ?? []
+    const seenIds = new Set(ranked.map((show) => show.id))
+    const extras = (browseQuery.data?.pages.flat() ?? []).filter((show) => {
+      if (seenIds.has(show.id)) {
+        return false
+      }
 
-    return browseQuery.data?.pages.flat() ?? []
-  }, [browseQuery.data?.pages, isSearchActive, searchQueryResult.data])
+      return showMatchesSearchQuery(show, debouncedQuery)
+    })
 
-  const shows = useMemo(
-    () => filterShowsByStatus(sourceShows, statusFilter),
-    [sourceShows, statusFilter],
+    return [...ranked, ...extras]
+  }, [browseQuery.data?.pages, debouncedQuery, searchQueryResult.data])
+
+  const filteredSearchShows = useMemo(
+    () => filterShowsByStatus(mergedSearchShows, statusFilter),
+    [mergedSearchShows, statusFilter],
   )
 
-  const reachedEnd =
-    !isSearchActive && Boolean(browseQuery.data?.pages.some((page) => page.length === 0))
+  const filteredBrowseShows = useMemo(
+    () => filterShowsByStatus(browseQuery.data?.pages.flat() ?? [], statusFilter),
+    [browseQuery.data?.pages, statusFilter],
+  )
+
+  const shows = isSearchActive ? filteredSearchShows : filteredBrowseShows
+
+  const reachedEnd = Boolean(browseQuery.data?.pages.some((page) => page.length === 0))
 
   const isInitialLoading = isSearchActive
     ? searchQueryResult.isPending && !searchQueryResult.data
-    : browseQuery.isPending && !browseQuery.data
+    : browseEnabled && browseQuery.isPending && !browseQuery.data
 
   const isUpdating = isSearchActive
     ? searchQueryResult.isFetching && Boolean(searchQueryResult.data)
@@ -121,13 +141,13 @@ export function useShowsList() {
   const hasBrowseData = Boolean(browseQuery.data?.pages.some((page) => page.length > 0))
   const isError = isSearchActive
     ? searchQueryResult.isError
-    : browseQuery.isError && !hasBrowseData
+    : browseEnabled && browseQuery.isError && !hasBrowseData
 
   const error = isSearchActive ? searchQueryResult.error : browseQuery.error
 
   const refetch = isSearchActive ? searchQueryResult.refetch : browseQuery.refetch
 
-  const hasNextPage = !isSearchActive && !reachedEnd && Boolean(browseQuery.hasNextPage)
+  const hasNextPage = !reachedEnd && Boolean(browseQuery.hasNextPage)
   const isFetchingNextPage = browseQuery.isFetchingNextPage
 
   const fetchNextPage = () => {
@@ -138,12 +158,22 @@ export function useShowsList() {
     return browseQuery.fetchNextPage()
   }
 
+  const setSearchQuery = (value: string) => {
+    pendingLocalSyncRef.current = true
+    setSearchQueryState(value)
+  }
+
+  const setStatusFilter = (value: StatusFilter) => {
+    pendingLocalSyncRef.current = true
+    setStatusFilterState(value)
+  }
+
   return {
     shows,
     searchQuery,
-    setSearchQuery: setSearchQueryState,
+    setSearchQuery,
     statusFilter,
-    setStatusFilter: setStatusFilterState,
+    setStatusFilter,
     isSearchActive,
     isInitialLoading,
     isUpdating,
@@ -153,6 +183,10 @@ export function useShowsList() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-    isEmpty: !isInitialLoading && !isError && shows.length === 0,
+    isEmpty:
+      (browseEnabled || isSearchActive) &&
+      !isInitialLoading &&
+      !isError &&
+      (isSearchActive ? filteredSearchShows.length === 0 : shows.length === 0),
   }
 }

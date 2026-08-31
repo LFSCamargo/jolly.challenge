@@ -3,7 +3,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useFavoritesStore } from '@/modules/favorites'
 import { HeartIcon, HouseIcon, SearchIcon } from 'lucide-react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 const itemClass = (isActive: boolean) =>
   cn(
@@ -15,8 +15,8 @@ const itemClass = (isActive: boolean) =>
 export function AppBottomNav() {
   const favoritesCount = useFavoritesStore((state) => state.favorites.length)
   const location = useLocation()
-  const onHome = location.pathname === '/' && location.hash !== '#search'
-  const onSearch = location.pathname === '/' && location.hash === '#search'
+  const onHome = location.pathname === '/'
+  const onSearch = location.pathname === '/search'
   const onMyList = location.pathname === '/favorites'
 
   return (
@@ -34,14 +34,14 @@ export function AppBottomNav() {
           <HouseIcon />
           Home
         </NavLink>
-        <Link
-          to={{ pathname: '/', hash: 'search' }}
+        <NavLink
+          to="/search"
           className={itemClass(onSearch)}
           aria-current={onSearch ? 'page' : undefined}
         >
           <SearchIcon />
           Search
-        </Link>
+        </NavLink>
         <NavLink
           to="/favorites"
           className={() => itemClass(onMyList)}

@@ -50,7 +50,7 @@ src/
     strip-html.ts
     utils.ts             # cn()
   modules/
-    shows/               # Hero + next-watch rail + growing grid, search, filter, infinite scroll
+    shows/               # Compact featured card + portrait covers, dedicated search, filter, infinite scroll
     show-detail/         # Detail hero + episodes by season
     favorites/           # My List (Zustand persist)
   routes/
@@ -71,8 +71,10 @@ in modules or `src/common/`. Compose them (Button + Input + Select + Badge, etc.
 See [DESIGN_DOC.md](DESIGN_DOC.md) §6.
 
 **Visual language:** Netflix-inspired TV UI — black canvas, Netflix red accent,
-cinematic hero, pill CTAs, a Your Next Watch rail, and an infinite All Shows grid.
-Tokens in `src/styles/index.css`.
+compact cinematic featured card, pill CTAs, and portrait covers in the Your Next
+Watch rail and infinite All Shows grid. Search expands from desktop navigation and
+uses a dedicated page on mobile; search results keep loading more catalog pages
+on scroll. Tokens in `src/styles/index.css`.
 
 Installed primitives: `button`, `card`, `input`, `select`, `dropdown-menu`,
 `badge`, `skeleton`, `separator`, `empty`, `spinner`, `toggle`, `toggle-group`,
@@ -130,7 +132,8 @@ mobile per `.cursor/rules/design-ux.mdc` before implementing.
 
 | Path | Page | Module | Query params |
 | ---- | ---- | ------ | ------------ |
-| `/` | Shows | `shows` | `q` (search), `status` (Running / Ended / To Be Determined) |
+| `/` | Shows | `shows` | `status` (Running / Ended / To Be Determined) |
+| `/search` | Search | `shows` | `q` (search), `status` (Running / Ended / To Be Determined) |
 | `/shows/:showId` | Show detail | `show-detail` | — |
 | `/favorites` | My List | `favorites` | — |
 | `*` | Not found | `common` | — |
