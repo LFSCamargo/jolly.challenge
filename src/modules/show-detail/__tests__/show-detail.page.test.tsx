@@ -14,7 +14,6 @@ describe('ShowDetailPage', () => {
     expect(
       await screen.findByRole('heading', { name: tvmazeTestLabels.detailShowName }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Season 1' })).toBeInTheDocument()

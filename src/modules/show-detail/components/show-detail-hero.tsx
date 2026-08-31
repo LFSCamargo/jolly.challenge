@@ -13,7 +13,7 @@ type ShowDetailHeroProps = {
 export function ShowDetailHero({ show }: ShowDetailHeroProps) {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
   const isFavorite = useFavoritesStore((state) => state.isFavorite(show.id))
-  const imageUrl = getShowDetailImage(show) ?? getShowListImage(show)
+  const imageUrl = getShowDetailImage(show)
   const summary = show.summary ? stripHtml(show.summary) : null
   const metadata = [
     show.status,
