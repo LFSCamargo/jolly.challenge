@@ -105,7 +105,7 @@ export function AppHeader() {
             >
               S
             </span>
-            <span className="sr-only">Show Explorer home</span>
+            <span className="sr-only">Simple TV Maze client home</span>
           </Link>
 
           <nav
