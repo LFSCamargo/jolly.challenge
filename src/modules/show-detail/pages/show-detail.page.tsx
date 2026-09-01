@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { Link, useParams } from 'react-router-dom'
 import { ShowDetailHero } from '../components/show-detail-hero'
 import { ShowEpisodes } from '../components/show-episodes'
+import { ShowsHeroSkeleton } from '@/modules/shows'
 
 function parseShowId(rawShowId: string | undefined): number | null {
   if (!rawShowId) {
@@ -78,11 +79,20 @@ export function ShowDetailPage() {
 
   if (showQuery.isPending) {
     return (
-      <main className="mx-auto w-full max-w-[1920px] px-4 pt-20 pb-24 sm:px-8 lg:px-12 md:pb-8">
-        <Skeleton className="min-h-104 rounded-2xl sm:min-h-112 lg:min-h-128" />
-        <Skeleton className="mt-8 h-8 w-40" />
-        <Skeleton className="mt-4 h-24 w-full rounded-xl" />
-      </main>
+      <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 md:pb-8">
+        <section className="mx-auto w-full max-w-[1920px] px-4 pt-20 pb-6 sm:px-8 lg:px-12">
+          <ShowsHeroSkeleton />
+        </section>
+        <main
+          aria-busy="true"
+          aria-label="Loading show details"
+          className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-6 px-4 sm:px-8 lg:max-w-4xl lg:px-12"
+        >
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </main>
+      </div>
     )
   }
 

@@ -7,6 +7,7 @@ import { buildBrowseSections } from '../services/build-browse-sections.service'
 import { ShowsBrowseRows } from '../components/shows-browse-rows'
 import { ShowsGrid } from '../components/shows-grid'
 import { ShowsHero } from '../components/shows-hero'
+import { ShowsHeroSkeleton } from '../components/shows-hero-skeleton'
 import { ShowsListStates } from '../components/shows-list-states'
 import { ShowsToolbar } from '../components/shows-toolbar'
 
@@ -82,17 +83,11 @@ export function ShowsPage() {
   return (
     <div className="flex min-w-0 flex-col overflow-x-hidden pb-24 [overflow-anchor:none] md:pb-8">
       <main className="mx-auto flex w-full max-w-[1920px] min-w-0 flex-col gap-8 px-4 pt-20 pb-6 sm:px-8 lg:px-12">
-        {featuredShow ? (
+        {isInitialLoading && !isSearchActive ? (
+          <ShowsHeroSkeleton />
+        ) : featuredShow ? (
           <div className={homeHeroEnterClass}>
             <ShowsHero show={featuredShow} />
-          </div>
-        ) : null}
-
-        {!featuredShow ? (
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {isSearchActive ? 'Search' : 'Shows'}
-            </h1>
           </div>
         ) : null}
 
@@ -118,6 +113,7 @@ export function ShowsPage() {
           isEmpty={isEmpty}
           isSearchActive={isSearchActive}
           statusFilterLabel={statusFilterLabel}
+          skeletonVariant={isSearchActive ? 'search' : 'browse'}
           onRetry={() => {
             void refetch()
           }}

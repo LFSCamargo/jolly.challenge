@@ -1,3 +1,5 @@
+import { ShowsBrowseSkeleton } from '../components/shows-browse-skeleton'
+import { ShowsGridSkeleton } from '../components/shows-grid-skeleton'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,7 +15,6 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 
 type ShowsListStatesProps = {
@@ -22,6 +23,7 @@ type ShowsListStatesProps = {
   isEmpty: boolean
   isSearchActive: boolean
   statusFilterLabel: string
+  skeletonVariant?: 'browse' | 'search'
   onRetry: () => void
 }
 
@@ -31,25 +33,21 @@ export function ShowsListStates({
   isEmpty,
   isSearchActive,
   statusFilterLabel,
+  skeletonVariant = 'browse',
   onRetry,
 }: ShowsListStatesProps) {
   if (isInitialLoading) {
-    return (
-      <div
-        className="flex min-w-0 flex-col gap-8"
-        aria-busy="true"
-        aria-label="Loading shows"
-      >
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-6 w-40" />
-          <div className="-mx-4 flex scrollbar-none gap-2 overflow-x-hidden px-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="w-28 shrink-0 sm:w-32 md:w-36">
-                <Skeleton className="aspect-2/3 w-full rounded-md" />
-              </div>
-            ))}
-          </div>
+    if (skeletonVariant === 'search') {
+      return (
+        <div aria-busy="true" aria-label="Loading search results">
+          <ShowsGridSkeleton titleWidthClassName="w-36" cardCount={12} />
         </div>
+      )
+    }
+
+    return (
+      <div aria-busy="true" aria-label="Loading shows">
+        <ShowsBrowseSkeleton />
       </div>
     )
   }

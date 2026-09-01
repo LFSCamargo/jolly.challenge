@@ -74,6 +74,7 @@ export function SearchPage() {
             isEmpty={isEmpty}
             isSearchActive
             statusFilterLabel={statusFilterLabel}
+            skeletonVariant="search"
             onRetry={() => {
               void refetch()
             }}
